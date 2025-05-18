@@ -1,0 +1,582 @@
+﻿{% extends "citizen_dashboard/citizen_base.html" %}
+
+{% block page_title %}My Complaints | {{ request.user.get_full_name }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+<li class="breadcrumb-item active">My Complaints</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Complaints Page Specific Styles */
+    .complaints-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .page-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .filter-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        margin-bottom: 2rem;
+    }
+
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .filter-title {
+        font-weight: 500;
+        color: var(--primary-dark);
+        margin-bottom: 0;
+    }
+
+    .filter-reset {
+        color: var(--primary-color);
+        font-size: 0.9rem;
+        text-decoration: none;
+    }
+
+    .filter-reset:hover {
+        text-decoration: underline;
+    }
+
+    .filter-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 0;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-medium);
+        font-weight: 500;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 0.9rem;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(45, 94, 82, 0.1);
+    }
+
+    .complaints-list {
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+    }
+
+    .complaints-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .complaints-table th {
+        background: var(--bg-light);
+        color: var(--text-medium);
+        font-weight: 500;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 1rem;
+        text-align: left;
+    }
+
+    .complaints-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-light);
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+
+    .complaints-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .complaints-table tr:hover td {
+        background: rgba(45, 94, 82, 0.03);
+    }
+
+    .ticket-link {
+        color: var(--primary-color);
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    .ticket-link:hover {
+        text-decoration: underline;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: capitalize;
+    }
+
+    .status-submitted {
+        background: rgba(158, 158, 158, 0.1);
+        color: #9E9E9E;
+    }
+
+    .status-acknowledged {
+        background: rgba(33, 150, 243, 0.1);
+        color: var(--info-color);
+    }
+
+    .status-in_progress {
+        background: rgba(255, 152, 0, 0.1);
+        color: #FF9800;
+    }
+
+    .status-resolved {
+        background: rgba(76, 175, 80, 0.1);
+        color: var(--success-color);
+    }
+
+    .status-rejected {
+        background: rgba(244, 67, 54, 0.1);
+        color: var(--error-color);
+    }
+
+    .status-reopened {
+        background: rgba(156, 39, 176, 0.1);
+        color: #9C27B0;
+    }
+
+    .priority-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .priority-low {
+        background: rgba(76, 175, 80, 0.1);
+        color: var(--success-color);
+    }
+
+    .priority-medium {
+        background: rgba(255, 152, 0, 0.1);
+        color: #FF9800;
+    }
+
+    .priority-high {
+        background: rgba(244, 67, 54, 0.1);
+        color: var(--error-color);
+    }
+
+    .priority-critical {
+        background: rgba(233, 30, 99, 0.1);
+        color: #E91E63;
+    }
+
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--border-color);
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+
+    .empty-state h4 {
+        color: var(--text-medium);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border-light);
+    }
+
+    .page-item {
+        margin: 0 0.25rem;
+    }
+
+    .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        border: 1px solid var(--border-light);
+        color: var(--text-medium);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .page-link:hover {
+        background: var(--bg-light);
+    }
+
+    .page-item.active .page-link {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .page-item.disabled .page-link {
+        color: var(--text-light);
+        pointer-events: none;
+    }
+
+    .actions-cell {
+        white-space: nowrap;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: transparent;
+        border: none;
+        color: var(--text-medium);
+        transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+        background: rgba(0, 0, 0, 0.05);
+        color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        .complaints-container {
+            padding: 1rem;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .page-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        .filter-form {
+            grid-template-columns: 1fr;
+        }
+
+        .complaints-table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Filter form submission
+        const filterForm = document.getElementById('complaint-filters');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                this.submit();
+            });
+
+            // Reset filters
+            const resetBtn = document.getElementById('reset-filters');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+                    const inputs = filterForm.querySelectorAll('select, input');
+                    inputs.forEach(input => {
+                        if (input.type !== 'submit') {
+                            input.value = '';
+                        }
+                    });
+                    filterForm.submit();
+                });
+            }
+        }
+
+        // Toggle filter card
+        const filterToggle = document.getElementById('filter-toggle');
+        if (filterToggle) {
+            filterToggle.addEventListener('click', function() {
+                const filterCard = document.getElementById('filter-card');
+                if (filterCard) {
+                    filterCard.classList.toggle('d-none');
+                    this.querySelector('i').classList.toggle('fa-chevron-down');
+                    this.querySelector('i').classList.toggle('fa-chevron-up');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="complaints-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">My Complaints</h1>
+            <p class="text-muted">View and manage all your submitted complaints</p>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'submit_complaint' %}" class="btn btn-primary">
+                <i class="fas fa-plus mr-1"></i> New Complaint
+            </a>
+            <button id="filter-toggle" class="btn btn-outline-secondary">
+                <i class="fas fa-filter mr-1"></i>
+                Filters
+                <i class="fas fa-chevron-down ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Card -->
+    <div id="filter-card" class="filter-card {% if not filter_active %}d-none{% endif %}">
+        <div class="filter-header">
+            <h3 class="filter-title">Filter Complaints</h3>
+            <a id="reset-filters" href="?" class="filter-reset">
+                <i class="fas fa-redo mr-1"></i> Reset Filters
+            </a>
+        </div>
+        <form id="complaint-filters" method="get" action="">
+            <div class="filter-form">
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="">All Statuses</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if value == current_status %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select name="priority" id="priority" class="form-control">
+                        <option value="">All Priorities</option>
+                        {% for value, label in priority_choices %}
+                        <option value="{{ value }}" {% if value == current_priority %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select name="category" id="category" class="form-control">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category.id == current_category %}selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="date_from">From Date</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="form-group">
+                    <label for="date_to">To Date</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                <div class="form-group">
+                    <label for="search">Search</label>
+                    <input type="text" name="search" id="search" class="form-control" placeholder="Search complaints..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="text-right mt-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search mr-1"></i> Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Complaints List -->
+    <div class="complaints-list">
+        {% if complaints %}
+        <div class="table-responsive">
+            <table class="complaints-table">
+                <thead>
+                    <tr>
+                        <th>Ticket #</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Created</th>
+                        <th>Last Update</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for complaint in complaints %}
+                    <tr>
+                        <td>
+                            <a href="{{ complaint.get_absolute_url }}" class="ticket-link">
+                                {{ complaint.ticket_number }}
+                            </a>
+                        </td>
+                        <td>{{ complaint.title|truncatechars:40 }}</td>
+                        <td>{{ complaint.category.name|default:"-" }}</td>
+                        <td>
+                            <span class="status-badge status-{{ complaint.status|slugify }}">
+                                {{ complaint.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="priority-badge priority-{{ complaint.priority|slugify }}">
+                                {{ complaint.get_priority_display }}
+                            </span>
+                        </td>
+                        <td>{{ complaint.created_at|date:"M d, Y" }}</td>
+                        <td>{{ complaint.updated_at|timesince }} ago</td>
+                        <td class="actions-cell">
+                            <a href="{{ complaint.get_absolute_url }}" class="action-btn" data-bs-toggle="tooltip" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% if complaint.status != 'resolved' and complaint.status != 'rejected' %}
+                            <a href="{% url 'edit_complaint' complaint.id %}" class="action-btn" data-bs-toggle="tooltip" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'complaint_messages' complaint.id %}" class="action-btn" data-bs-toggle="tooltip" title="Messages">
+                                <i class="fas fa-comments"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h4>No Complaints Found</h4>
+            <p>You haven't submitted any complaints yet, or no complaints match your filters.</p>
+            <a href="#" class="btn btn-primary">
+                <i class="fas fa-plus mr-1"></i> Submit New Complaint
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

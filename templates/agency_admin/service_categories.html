@@ -1,0 +1,230 @@
+﻿{% extends "agency_admin/base.html" %}
+
+{% block page_title %}Service Categories{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'agency_admin_dashboard' %}">Dashboard</a></li>
+<li>Service Categories</li>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'agency_service_category_add' %}" class="btn" style="background-color: var(--primary-color); color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center;">
+    <i class="fas fa-plus-circle mr-1"></i> Add Category
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- Search and Filter Section -->
+    <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: center;">
+        <div style="position: relative; flex: 1;">
+            <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light);"></i>
+            <input type="text" id="categorySearch" placeholder="Search categories..." style="width: 100%; padding: 10px 15px 10px 40px; border: 1px solid var(--border-light); border-radius: 4px; font-size: 0.9rem;">
+        </div>
+        <div style="min-width: 200px;">
+            <select style="width: 100%; padding: 10px 15px; border: 1px solid var(--border-light); border-radius: 4px; font-size: 0.9rem;">
+                <option value="">Filter by Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+    </div>
+
+    {% if categories %}
+    <!-- Categories Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;" id="categoriesGrid">
+        {% for category in categories %}
+        <div class="category-card" data-search="{{ category.name|lower }} {{ category.description|default:''|lower }}"
+             style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: all 0.3s ease;">
+
+            <!-- Category Header -->
+            <div style="background-color: var(--primary-color); color: white; padding: 15px; position: relative;">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 40px; height: 40px; background-color: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                        <i class="fas fa-{{ category.icon|default:'tag' }}"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0; font-size: 1.1rem; font-weight: 600;">{{ category.name }}</h4>
+                        {% if category.parent %}
+                        <div style="font-size: 0.75rem; opacity: 0.8;">Child of {{ category.parent.name }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="position: absolute; top: 15px; right: 15px; background-color: var(--accent-color); color: var(--primary-dark); padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                    {{ category.sla_hours }}h SLA
+                </div>
+            </div>
+
+            <!-- Category Body -->
+            <div style="padding: 20px;">
+                {% if category.description %}
+                <p style="color: var(--text-medium); margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5;">
+                    {{ category.description }}
+                </p>
+                {% endif %}
+
+                <!-- Stats -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; text-align: center;">
+                    <div>
+                        <div style="font-size: 1.2rem; font-weight: 600; color: var(--primary-color);">{{ category.complaints.count }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Complaints</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.2rem; font-weight: 600; color: var(--primary-color);">{{ category.subcategories.count }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Subcategories</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.2rem; font-weight: 600; color: var(--primary-color);">{{ category.assigned_staff.count }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Specialists</div>
+                    </div>
+                </div>
+
+                <!-- Status and Actions -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 15px;">
+                    <span style="padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500;
+                          {% if category.is_active %}background-color: rgba(76, 175, 80, 0.1); color: var(--success-color);
+                          {% else %}background-color: rgba(144, 164, 174, 0.1); color: var(--text-light);{% endif %}">
+                        {% if category.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+
+                    <div style="display: flex; gap: 8px;">
+                        <a href="{% url 'agency_service_category_edit' pk=category.id %}"
+                           style="padding: 6px 12px; border: 1px solid var(--primary-color); color: var(--primary-color); border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center;">
+                            <i class="fas fa-edit" style="font-size: 0.8rem;"></i>
+                        </a>
+                        <button onclick="showDeleteModal('{{ category.id }}', '{{ category.name }}', {{ category.complaints.count }})"
+                                style="padding: 6px 12px; border: 1px solid var(--error-color); color: var(--error-color); border-radius: 4px; background: none; cursor: pointer; display: inline-flex; align-items: center;">
+                            <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div style="background: white; border-radius: 8px; padding: 40px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <div style="font-size: 3rem; color: var(--text-light); margin-bottom: 20px;">
+            <i class="fas fa-tags"></i>
+        </div>
+        <h3 style="margin-bottom: 10px; color: var(--text-dark);">No Service Categories Found</h3>
+        <p style="color: var(--text-medium); margin-bottom: 20px;">Create your first service category to organize complaints by type</p>
+        <a href="{% url 'agency_service_category_add' %}"
+           style="padding: 8px 15px; background-color: var(--primary-color); color: white; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center;">
+            <i class="fas fa-plus-circle mr-1"></i> Create Category
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Pagination -->
+    {% if categories.has_other_pages %}
+    <div style="display: flex; justify-content: center;">
+        <div style="display: flex; gap: 5px;">
+            {% if categories.has_previous %}
+            <a href="?page=1" style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ categories.previous_page_number }}" style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                <i class="fas fa-angle-left"></i>
+            </a>
+            {% endif %}
+
+            {% for num in categories.paginator.page_range %}
+                {% if categories.number == num %}
+                <span style="padding: 8px 12px; border: 1px solid var(--primary-color); background-color: var(--primary-color); color: white; border-radius: 4px;">{{ num }}</span>
+                {% elif num > categories.number|add:'-3' and num < categories.number|add:'3' %}
+                <a href="?page={{ num }}" style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if categories.has_next %}
+            <a href="?page={{ categories.next_page_number }}" style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ categories.paginator.num_pages }}" style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                <i class="fas fa-angle-double-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Delete Modal (Dynamic) -->
+    <div id="deleteModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+        <div style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light);">
+                <h3 style="margin: 0; color: var(--error-color);">Confirm Deletion</h3>
+                <span onclick="document.getElementById('deleteModal').style.display='none'" style="cursor: pointer; font-size: 1.5rem;">&times;</span>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <p>Are you sure you want to delete <strong id="modalCategoryName"></strong>?</p>
+                <div id="complaintWarning" style="display: none; background-color: rgba(255,193,7,0.1); padding: 10px; border-radius: 4px; margin-top: 10px; border-left: 3px solid var(--warning-color);">
+                    <i class="fas fa-exclamation-triangle" style="color: var(--warning-color); margin-right: 8px;"></i>
+                    <span id="warningText"></span>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="document.getElementById('deleteModal').style.display='none'"
+                        style="padding: 8px 15px; background-color: var(--text-light); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Cancel
+                </button>
+                <form id="deleteForm" method="post" action="#" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit"
+                            style="padding: 8px 15px; background-color: var(--error-color); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Delete Permanently
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Search functionality
+    document.getElementById('categorySearch').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const categoryCards = document.querySelectorAll('.category-card');
+
+        categoryCards.forEach(card => {
+            const searchData = card.getAttribute('data-search');
+            if (searchData.includes(searchTerm)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    // Show delete modal with dynamic content
+    function showDeleteModal(categoryId, categoryName, complaintCount) {
+        const modal = document.getElementById('deleteModal');
+        document.getElementById('modalCategoryName').textContent = categoryName;
+
+        const warningDiv = document.getElementById('complaintWarning');
+        const warningText = document.getElementById('warningText');
+        const deleteForm = document.getElementById('deleteForm');
+
+        if (complaintCount > 0) {
+            warningDiv.style.display = 'flex';
+            warningText.textContent = `This category has ${complaintCount} associated complaint${complaintCount !== 1 ? 's' : ''}.`;
+        } else {
+            warningDiv.style.display = 'none';
+        }
+
+        deleteForm.action = `/agency/service-categories/${categoryId}/delete/`;
+        modal.style.display = 'block';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('deleteModal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

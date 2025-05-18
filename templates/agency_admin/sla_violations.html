@@ -1,0 +1,543 @@
+﻿{% extends "agency_admin/base.html" %}
+
+{% block page_title %}SLA Violations{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'agency_admin_dashboard' %}">Dashboard</a></li>
+<li>SLA Violations</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* SLA Violations Specific Styles */
+    .sla-violations-container {
+        margin-top: 20px;
+    }
+
+    .violation-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: none;
+    }
+
+    .violation-header {
+        background: linear-gradient(135deg, var(--error-color), #e53935);
+        color: white;
+        padding: 20px 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .violation-title {
+        display: flex;
+        align-items: center;
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 600;
+    }
+
+    .violation-title i {
+        margin-right: 12px;
+        font-size: 1.2rem;
+    }
+
+    .violation-count {
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .search-container {
+        position: relative;
+        width: 250px;
+    }
+
+    .search-container input {
+        width: 100%;
+        padding: 8px 15px 8px 35px;
+        border: none;
+        border-radius: 20px;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .search-container input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .search-container input:focus {
+        outline: none;
+        background-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: white;
+    }
+
+    .violation-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .violation-table thead th {
+        padding: 15px 20px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-medium);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--border-light);
+        background-color: var(--white);
+    }
+
+    .violation-table tbody tr {
+        border-bottom: 1px solid var(--border-light);
+        transition: all 0.2s ease;
+    }
+
+    .violation-table tbody tr:hover {
+        background-color: rgba(255, 82, 82, 0.05);
+    }
+
+    .violation-table tbody td {
+        padding: 15px 20px;
+        vertical-align: middle;
+    }
+
+    .ticket-link {
+        color: var(--primary-color);
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .ticket-link:hover {
+        color: var(--primary-dark);
+        text-decoration: underline;
+    }
+
+    .violation-duration {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        background-color: rgba(255, 82, 82, 0.1);
+        color: var(--error-color);
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .expected-time {
+        color: var(--error-color);
+        font-weight: 500;
+    }
+
+    .actual-time {
+        color: var(--success-color);
+        font-weight: 500;
+    }
+
+    .not-resolved {
+        color: var(--warning-color);
+        font-weight: 500;
+    }
+
+    .assignee-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .assignee-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 10px;
+        border: 2px solid var(--accent-color);
+    }
+
+    .assignee-name {
+        font-size: 0.9rem;
+    }
+
+    .unassigned {
+        font-style: italic;
+        color: var(--text-light);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        transition: all 0.2s ease;
+    }
+
+    .view-btn {
+        background-color: var(--primary-light);
+    }
+
+    .edit-btn {
+        background-color: var(--accent-color);
+    }
+
+    .action-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--success-color);
+        margin-bottom: 15px;
+    }
+
+    .empty-state h4 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+        color: var(--text-dark);
+    }
+
+    .empty-state p {
+        color: var(--text-medium);
+        margin: 0;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-top: 1px solid var(--border-light);
+    }
+
+    .pagination-info {
+        font-size: 0.9rem;
+        color: var(--text-medium);
+    }
+
+    .pagination {
+        display: flex;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .page-item {
+        margin: 0 3px;
+    }
+
+    .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border-light);
+        color: var(--text-medium);
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+
+    .page-link:hover {
+        background-color: var(--bg-light);
+        color: var(--primary-color);
+    }
+
+    .page-item.active .page-link {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: var(--white);
+    }
+
+    .page-item.disabled .page-link {
+        color: var(--text-light);
+        background-color: transparent;
+    }
+
+    @media (max-width: 992px) {
+        .violation-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .search-container {
+            width: 100%;
+        }
+
+        .violation-table thead {
+            display: none;
+        }
+
+        .violation-table tbody tr {
+            display: block;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+        }
+
+        .violation-table tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .violation-table tbody td:before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--text-medium);
+            margin-right: 15px;
+        }
+
+        .violation-table tbody td:last-child {
+            border-bottom: none;
+        }
+
+        .action-buttons {
+            justify-content: flex-end;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .violation-title {
+            font-size: 1.2rem;
+        }
+
+        .pagination-container {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .pagination {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sla-violations-container">
+    <div class="violation-card">
+        <div class="violation-header">
+            <div class="d-flex align-items-center">
+                <h2 class="violation-title">
+                    <i class="fas fa-clock"></i>
+                    SLA Violations
+                </h2>
+                <span class="violation-count">{{ violations.paginator.count }} violations</span>
+            </div>
+
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" placeholder="Search violations...">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="violation-table">
+                <thead>
+                    <tr>
+                        <th>Ticket #</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Expected Resolution</th>
+                        <th>Actual Resolution</th>
+                        <th>Violation Duration</th>
+                        <th>Assigned To</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for violation in violations %}
+                    <tr>
+                        <td data-label="Ticket #">
+                            <a href="{% url 'agency_complaint_detail' ticket_number=violation.complaint.ticket_number %}" class="ticket-link">
+                                #{{ violation.complaint.ticket_number }}
+                            </a>
+                        </td>
+                        <td data-label="Title">{{ violation.complaint.title|truncatechars:30 }}</td>
+                        <td data-label="Category">
+                            {% if violation.complaint.category %}
+                            <span class="category-tag">{{ violation.complaint.category.name }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Expected Resolution" class="expected-time">
+                            {{ violation.expected_resolution_time|date:"M d, Y H:i" }}
+                        </td>
+                        <td data-label="Actual Resolution">
+                            {% if violation.actual_resolution_time %}
+                            <span class="actual-time">{{ violation.actual_resolution_time|date:"M d, Y H:i" }}</span>
+                            {% else %}
+                            <span class="not-resolved">Not resolved yet</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Violation Duration">
+                            <span class="violation-duration">
+                                {{ violation.violation_minutes|floatformat }} minutes
+                            </span>
+                        </td>
+                        <td data-label="Assigned To">
+                            {% if violation.complaint.assigned_to %}
+                            <div class="assignee-info">
+                                <img src="{{ violation.complaint.assigned_to.profile_picture.url|default:'/static/images/default-profile.png' }}"
+                                     class="assignee-avatar"
+                                     alt="{{ violation.complaint.assigned_to.get_full_name }}"
+                                     title="{{ violation.complaint.assigned_to.get_full_name }}">
+                                <span class="assignee-name">{{ violation.complaint.assigned_to.get_short_name }}</span>
+                            </div>
+                            {% else %}
+                            <span class="unassigned">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Actions">
+                            <div class="action-buttons">
+                                <a href="{% url 'agency_complaint_detail' ticket_number=violation.complaint.ticket_number %}"
+                                   class="action-btn view-btn"
+                                   title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'agency_update_complaint_status' ticket_number=violation.complaint.ticket_number %}"
+                                   class="action-btn edit-btn"
+                                   title="Update Status">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <i class="fas fa-check-circle"></i>
+                                <h4>No SLA Violations Found</h4>
+                                <p>Great job! All complaints are being handled within their service level agreement timeframes.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if violations.has_other_pages %}
+        <div class="pagination-container">
+            <div class="pagination-info">
+                Showing {{ violations.start_index }} to {{ violations.end_index }} of {{ violations.paginator.count }} entries
+            </div>
+            <nav>
+                <ul class="pagination">
+                    {% if violations.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1" aria-label="First">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ violations.previous_page_number }}" aria-label="Previous">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in violations.paginator.page_range %}
+                        {% if violations.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > violations.number|add:'-3' and num < violations.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if violations.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ violations.next_page_number }}" aria-label="Next">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ violations.paginator.num_pages }}" aria-label="Last">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip({
+        placement: 'top',
+        trigger: 'hover'
+    });
+
+    // Quick search functionality
+    $("#searchInput").on("keyup", function() {
+        const value = $(this).val().toLowerCase();
+        $(".violation-table tbody tr").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
+
+    // Make entire table row clickable (excluding action buttons)
+    $(".violation-table tbody tr").click(function(e) {
+        if (!$(e.target).closest('.action-buttons').length &&
+            !$(e.target).is('.action-buttons, .action-buttons *')) {
+            window.location = $(this).find('.ticket-link').attr('href');
+        }
+    }).css('cursor', 'pointer');
+
+    // Add animation to action buttons
+    $('.action-btn').hover(
+        function() {
+            $(this).css('transform', 'translateY(-2px)');
+        },
+        function() {
+            $(this).css('transform', 'translateY(0)');
+        }
+    );
+});
+</script>
+{% endblock %}

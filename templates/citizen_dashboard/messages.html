@@ -1,0 +1,355 @@
+﻿{% extends "citizen_dashboard/citizen_base.html" %}
+
+{% block page_title %}Messages for {{ complaint.ticket_number }} | {{ request.user.get_full_name }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'citizen_admin' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'complaint_list' %}">My Complaints</a></li>
+<li class="breadcrumb-item"><a href="{% url 'complaint_detail' complaint.ticket_number %}">{{ complaint.ticket_number }}</a></li>
+<li class="breadcrumb-item active">Messages</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .messages-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .messages-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .messages-header h2 {
+        color: var(--primary-dark);
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    .messages-header .badge {
+        background: var(--primary-color);
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+    }
+
+    .messages-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .messages-list {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 1.5rem;
+    }
+
+    .message {
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .message-sender {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .sender-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--bg-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        overflow: hidden;
+    }
+
+    .sender-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .sender-info {
+        flex: 1;
+    }
+
+    .sender-name {
+        font-weight: 500;
+        color: var(--text-dark);
+        margin-bottom: 0.1rem;
+    }
+
+    .message-time {
+        color: var(--text-light);
+        font-size: 0.8rem;
+    }
+
+    .message-content {
+        background: var(--bg-light);
+        padding: 1rem;
+        border-radius: 8px;
+        position: relative;
+        margin-left: 55px;
+    }
+
+    .message-content:before {
+        content: '';
+        position: absolute;
+        left: -10px;
+        top: 15px;
+        width: 0;
+        height: 0;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+        border-right: 10px solid var(--bg-light);
+    }
+
+    .message-content p {
+        margin-bottom: 0;
+        color: var(--text-dark);
+    }
+
+    .message.own-message .message-content {
+        background: rgba(26, 58, 50, 0.1);
+        margin-left: 0;
+        margin-right: 55px;
+    }
+
+    .message.own-message .message-content:before {
+        left: auto;
+        right: -10px;
+        border-right: none;
+        border-left: 10px solid rgba(26, 58, 50, 0.1);
+    }
+
+    .message.own-message .message-sender {
+        flex-direction: row-reverse;
+    }
+
+    .message.own-message .sender-avatar {
+        margin-right: 0;
+        margin-left: 0.75rem;
+    }
+
+    .message.own-message .sender-info {
+        text-align: right;
+    }
+
+    .message-form-container {
+        padding: 1.5rem;
+        border-top: 1px solid var(--border-light);
+    }
+
+    .message-form {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .message-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        resize: none;
+        min-height: 50px;
+        transition: all 0.3s;
+    }
+
+    .message-input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(26, 58, 50, 0.1);
+    }
+
+    .send-button {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .send-button:hover {
+        background: var(--primary-light);
+        transform: translateY(-2px);
+    }
+
+    .send-button:disabled {
+        background: var(--border-color);
+        cursor: not-allowed;
+    }
+
+    .no-messages {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-medium);
+    }
+
+    .no-messages i {
+        font-size: 3rem;
+        color: var(--border-color);
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        text-decoration: none;
+    }
+
+    .back-button:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+        .messages-container {
+            padding: 1rem;
+        }
+
+        .messages-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .message-form {
+            flex-direction: column;
+        }
+
+        .send-button {
+            width: 100%;
+            height: 45px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-scroll to bottom of messages
+        const messagesList = document.querySelector('.messages-list');
+        if (messagesList) {
+            messagesList.scrollTop = messagesList.scrollHeight;
+        }
+
+        // Handle message form submission
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        if (messageForm) {
+            messageForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                if (messageInput.value.trim() === '') return;
+
+                // Disable input and button while sending
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+
+                // Submit form
+                this.submit();
+            });
+        }
+
+        // Auto-resize textarea
+        if (messageInput) {
+            messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+
+        // Real-time updates with WebSocket or SSE could be added here
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="messages-container">
+    <a href="{% url 'complaint_detail' complaint.ticket_number %}" class="back-button">
+        <i class="fas fa-arrow-left mr-2"></i> Back to Complaint
+    </a>
+
+    <div class="messages-header">
+        <h2>Messages for {{ complaint.title }}</h2>
+        <span class="badge">Ticket #{{ complaint.ticket_number }}</span>
+    </div>
+
+    <div class="messages-card">
+        <div class="messages-list">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="message {% if message.sender == request.user %}own-message{% endif %}">
+                    <div class="message-sender">
+                        <div class="sender-avatar">
+                            {% if message.sender.profile_picture %}
+                                <img src="{{ message.sender.profile_picture.url }}" alt="{{ message.sender.get_full_name }}">
+                            {% else %}
+                                <i class="fas fa-user"></i>
+                            {% endif %}
+                        </div>
+                        <div class="sender-info">
+                            <div class="sender-name">
+                                {% if message.sender == request.user %}
+                                    You
+                                {% else %}
+                                    {{ message.sender.get_full_name|default:message.sender.username }}
+                                {% endif %}
+                            </div>
+                            <div class="message-time">
+                                {{ message.created_at|timesince }} ago
+                            </div>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        <p>{{ message.text }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-messages">
+                    <i class="fas fa-comments"></i>
+                    <h3>No Messages Yet</h3>
+                    <p>Start the conversation by sending a message to the agency</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="message-form-container">
+            <form method="post" id="message-form" class="message-form">
+                {% csrf_token %}
+                <textarea name="text" id="message-input" class="message-input"
+                          placeholder="Type your message here..." required></textarea>
+                <button type="submit" id="send-button" class="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

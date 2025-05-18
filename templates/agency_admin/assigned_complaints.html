@@ -1,0 +1,180 @@
+﻿{% extends "agency_admin/base.html" %}
+
+{% block page_title %}My Assigned Complaints{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'agency_admin_dashboard' %}">Dashboard</a></li>
+<li class="active">My Complaints</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h3 class="card-title mb-0">
+            <i class="fas fa-user-tag mr-2"></i>Complaints Assigned to Me
+            <span class="badge badge-light ml-2">{{ complaints.paginator.count }}</span>
+        </h3>
+        <div class="card-tools">
+            <div class="input-group input-group-sm" style="width: 200px;">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search...">
+                <div class="input-group-append">
+                    <button class="btn btn-light" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Ticket #</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Created</th>
+                        <th>SLA Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for complaint in complaints %}
+                    <tr class="{% if complaint.sla_deadline and complaint.sla_deadline < timezone.now and complaint.status not in ['resolved', 'rejected'] %}table-danger{% elif complaint.priority == 'high' %}table-warning{% elif complaint.priority == 'critical' %}table-danger{% endif %}">
+                        <td>
+                            <a href="{% url 'agency_complaint_detail' ticket_number=complaint.ticket_number %}" class="font-weight-bold">
+                                {{ complaint.ticket_number }}
+                            </a>
+                        </td>
+                        <td>{{ complaint.title|truncatechars:30 }}</td>
+                        <td>{{ complaint.category.name|default:"-" }}</td>
+                        <td>
+                            <span class="badge badge-{{ complaint.status }}">
+                                {{ complaint.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ complaint.priority }}">
+                                <i class="fas fa-flag mr-1"></i>{{ complaint.get_priority_display }}
+                            </span>
+                        </td>
+                        <td>{{ complaint.created_at|date:"M d" }}</td>
+                        <td>
+                            {% if complaint.sla_deadline %}
+                                {% if complaint.sla_deadline < timezone.now and complaint.status not in ['resolved', 'rejected'] %}
+                                <span class="badge badge-danger">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Overdue
+                                </span>
+                                {% elif complaint.status in ['resolved', 'rejected'] %}
+                                <span class="badge badge-secondary">Completed</span>
+                                {% else %}
+                                <span class="badge badge-success">
+                                    Due {{ complaint.sla_deadline|timeuntil }}
+                                </span>
+                                {% endif %}
+                            {% else %}
+                            <span class="badge badge-secondary">No SLA</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'agency_complaint_detail' ticket_number=complaint.ticket_number %}"
+                                   class="btn btn-info" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'agency_update_complaint_status' ticket_number=complaint.ticket_number %}"
+                                   class="btn btn-warning" title="Update Status">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'agency_add_response' ticket_number=complaint.ticket_number %}"
+                                   class="btn btn-primary" title="Respond">
+                                    <i class="fas fa-reply"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="empty-state">
+                                <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
+                                <h4>No complaints assigned to you</h4>
+                                <p class="text-muted">You're all caught up!</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if complaints.has_other_pages %}
+    <div class="card-footer">
+        <nav aria-label="Complaints pagination">
+            <ul class="pagination justify-content-center mb-0">
+                {% if complaints.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ complaints.previous_page_number }}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in complaints.paginator.page_range %}
+                    {% if complaints.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > complaints.number|add:'-3' and num < complaints.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if complaints.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ complaints.next_page_number }}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ complaints.paginator.num_pages }}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Quick search functionality
+    $("#searchInput").on("keyup", function() {
+        const value = $(this).val().toLowerCase();
+        $("table tbody tr").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    });
+
+    // Highlight overdue complaints
+    $(".table-danger").each(function() {
+        $(this).find("td").css("background-color", "rgba(220, 53, 69, 0.1)");
+    });
+});
+</script>
+{% endblock %}

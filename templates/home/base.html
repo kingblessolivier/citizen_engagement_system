@@ -1,0 +1,977 @@
+﻿<!DOCTYPE html>
+{% load static %}
+<html lang="en" data-bs-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Citizen Engagement System - Digital Platform for Public Service Feedback">
+
+    <title>{% block title %}CES | Citizen Engagement System{% endblock %}</title>
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"></noscript>
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
+
+    <!-- Font Awesome -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@400;500;600;700&display=swap"></noscript>
+
+    <!-- Animate.css -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"></noscript>
+
+    <!-- Embedded CSS -->
+    <style>
+        /* Add this at the very top of your CSS to prevent FOUC */
+        html:not(.loaded) {
+            visibility: hidden;
+            opacity: 0;
+        }
+        html.loaded {
+            visibility: visible;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Reset margin and padding for html and body */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* Base Styles */
+        :root {
+            --bs-blue: #0d6efd;
+            --bs-indigo: #6610f2;
+            --bs-purple: #6f42c1;
+            --bs-pink: #d63384;
+            --bs-red: #dc3545;
+            --bs-orange: #fd7e14;
+            --bs-yellow: #ffc107;
+            --bs-green: #198754;
+            --bs-teal: #20c997;
+            --bs-cyan: #0dcaf0;
+            --bs-white: #fff;
+            --bs-gray: #6c757d;
+            --bs-gray-dark: #343a40;
+            --bs-primary: #0B1210;
+            --bs-secondary: #6c757d;
+            --bs-success: #198754;
+            --bs-info: #0dcaf0;
+            --bs-warning: #ffc107;
+            --bs-danger: #dc3545;
+            --bs-light: #f8f9fa;
+            --bs-dark: #212529;
+            --bs-font-sans-serif: 'Roboto', system-ui, -apple-system, "Segoe UI", sans-serif;
+            --bs-font-heading: 'Poppins', sans-serif;
+            --bs-font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            --bs-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
+            --transition-base: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --transition-fade: opacity 0.15s linear;
+            --transition-collapse: height 0.35s ease;
+        }
+
+        /* Rest of your existing CSS remains exactly the same */
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: white;
+            text-decoration: none;
+        }
+
+        .social-icons a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            color: white;
+            margin-right: 0.75rem;
+        }
+
+        .social-icons a:hover {
+            background-color: var(--bs-primary);
+            transform: translateY(-3px);
+            text-decoration: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--bs-font-sans-serif);
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.6;
+            color: #212529;
+            background-color: #fff;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--bs-font-heading);
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        /* Enhanced Link Styling */
+        a {
+            color: var(--bs-primary);
+            text-decoration: none;
+            transition: var(--transition-base);
+            position: relative;
+        }
+
+        a.text-white {
+            color: white !important;
+        }
+
+        /* Underline Hover Effect */
+        a.hover-underline {
+            position: relative;
+        }
+
+        a.hover-underline::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: currentColor;
+            transition: var(--transition-base);
+            opacity: 0;
+        }
+
+        a.hover-underline:hover::after,
+        a.hover-underline:focus::after {
+            width: 100%;
+            opacity: 1;
+        }
+
+        /* Enhanced Button Hover Effects */
+        .btn {
+            transition: var(--transition-base);
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Enhanced Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1.5rem;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            background-color: var(--bs-primary);
+            transition: var(--transition-base);
+        }
+
+        .navbar-container {
+            width: 100%;
+            display: flex;
+            flex-wrap: inherit;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Logo section - left aligned */
+        .navbar-brand-section {
+            display: flex;
+            align-items: center;
+            flex: 0 0 auto;
+        }
+
+        .navbar-brand {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0;
+            margin-right: 1rem;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: white;
+            transition: var(--transition-base);
+        }
+
+        .navbar-brand img {
+            height: 50px;
+            transition: var(--transition-base);
+            margin-right: 10px;
+        }
+
+        .navbar-brand:hover {
+            transform: translateY(-1px);
+            text-decoration: none;
+        }
+
+        .navbar-brand:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Center navigation items */
+        .navbar-center {
+            display: flex;
+            flex: 1 1 auto;
+            justify-content: center;
+        }
+
+        .navbar-nav {
+            display: flex;
+            flex-direction: row;
+            padding-left: 0;
+            margin-bottom: 0;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-item {
+            position: relative;
+            margin: 0 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            transition: var(--transition-base);
+            border-radius: 0.5rem;
+            position: relative;
+        }
+
+        .nav-link:hover, .nav-link:focus {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+
+        .nav-link.active {
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Enhanced underline animation for active nav link */
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            width: 50%;
+            height: 3px;
+            bottom: 0.25rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            border-radius: 3px;
+            animation: navUnderline 0.3s ease-out forwards;
+        }
+
+        @keyframes navUnderline {
+            from {
+                width: 0;
+                opacity: 0;
+            }
+            to {
+                width: 50%;
+                opacity: 1;
+            }
+        }
+
+        /* Right side - auth buttons */
+        .navbar-right {
+            display: flex;
+            flex: 0 0 auto;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .auth-buttons .btn {
+            margin-left: 0.75rem;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: var(--transition-base);
+        }
+
+        .btn-login {
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background-color: transparent;
+        }
+
+        .btn-login:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-signup {
+            background-color: white;
+            color: var(--bs-primary);
+            border: 1px solid white;
+        }
+
+        .btn-signup:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+        }
+
+        /* Enhanced dropdown menu */
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            border-radius: 0.75rem;
+            padding: 0.5rem 0;
+            margin-top: 0.5rem;
+            animation: fadeInDown 0.3s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item {
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            margin: 0 0.5rem;
+            width: auto;
+            transition: var(--transition-base);
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(var(--bs-primary), 0.1);
+            transform: translateX(5px);
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            padding: 0.5rem;
+            margin-left: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition-base);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: rotate(15deg) scale(1.1);
+        }
+
+        /* Enhanced card hover effects */
+        .card {
+            transition: var(--transition-base);
+            transform: translateY(0);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Enhanced form controls */
+        .form-control {
+            transition: var(--transition-base);
+        }
+
+        .form-control:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.25rem rgba(11, 18, 16, 0.25);
+        }
+
+        /* Smooth scrolling for anchor links */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1199.98px) {
+            .navbar-center {
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .navbar-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .navbar-brand-section {
+                justify-content: space-between;
+                width: 100%;
+            }
+
+            .navbar-center {
+                order: 3;
+                width: 100%;
+                margin-top: 1rem;
+                justify-content: center;
+            }
+
+            .navbar-right {
+                order: 2;
+                width: 100%;
+                justify-content: flex-end;
+                margin-top: 1rem;
+            }
+
+            .navbar-nav {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .nav-item {
+                width: 100%;
+                margin: 0.25rem 0;
+            }
+
+            .nav-link {
+                padding: 0.75rem 1rem;
+                width: 100%;
+            }
+
+            .nav-link.active::after {
+                left: 0;
+                transform: none;
+                width: 100%;
+                animation: mobileNavUnderline 0.3s ease-out forwards;
+            }
+
+            @keyframes mobileNavUnderline {
+                from {
+                    width: 0;
+                    opacity: 0;
+                }
+                to {
+                    width: 100%;
+                    opacity: 1;
+                }
+            }
+
+            .auth-buttons {
+                display: flex;
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .auth-buttons .btn {
+                margin-left: 0.5rem;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .navbar-brand img {
+                height: 40px;
+            }
+
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Back to top button */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--bs-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition-base);
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+            background-color: rgba(11, 18, 16, 1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Page content transitions */
+        main {
+            animation: fadeIn 0.5s ease-out;
+            margin-bottom: 0;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="d-flex flex-column">
+
+    <!-- Loading screen -->
+    <div id="loading-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <header class="navbar navbar-expand-lg navbar-dark shadow-sm" style="margin-top: 0;">
+        <div class="container-fluid container-lg">
+            <div class="navbar-container">
+                <!-- Logo section - left aligned -->
+                <div class="navbar-brand-section">
+                    <a class="navbar-brand" href="{% url 'home' %}">
+                        <img src="/static/images/cms_logo1.png" alt="CES Logo" class="d-inline-block align-text-top">
+                        <span class="d-none d-md-inline">Citizen Engagement</span>
+                    </a>
+
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav" aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                </div>
+                <!-- Center navigation items -->
+                <nav class="navbar-center collapse navbar-collapse" id="main-nav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link hover-underline {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">
+                                <i class="fas fa-home fa-fw me-1"></i>Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link hover-underline {% if request.resolver_match.url_name == 'submit_complaint' %}active{% endif %}" href="{% url 'complaint_submission' %}">
+                                <i class="fas fa-comment-dots fa-fw me-1"></i>Complaint Submission
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link hover-underline {% if request.resolver_match.url_name == 'complaint_tracking' %}active{% endif %}" href="{% url 'complaint_tracking' %}">
+                                <i class="fas fa-search fa-fw me-1"></i>Track Status
+                            </a>
+                        </li>
+                    </ul>
+
+                </nav>
+
+                <!-- Right side - auth buttons and theme toggle -->
+                <div class="navbar-right">
+                    {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="user-menu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" width="36" height="36">
+                            {% else %}
+                            <i class="fas fa-user-circle me-2"></i>
+                            {% endif %}
+                            <span class="d-none d-lg-inline">{{ user.get_short_name|default:user.username }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="user-menu">
+                            <li><a class="dropdown-item hover-underline" href="#"><i class="fas fa-user fa-fw me-2"></i>My Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% if user.role == 'super_admin' %}
+                            <li><a class="dropdown-item hover-underline" href="/admin"><i class="fas fa-cog fa-fw me-2"></i>Admin Panel</a></li>
+                            {% elif user.role == 'agency_admin' %}
+                             <li><a class="dropdown-item hover-underline" href="/agency_admin"><i class="fas fa-cog fa-fw me-2"></i>Agency Dashboard</a></li>
+                            {% else %}
+                            <li><a class="dropdown-item hover-underline" href="{% url 'citizen_admin' %}"><i class="fas fa-cog fa-fw me-2"></i>Citizen Dashboard</a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item hover-underline" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt fa-fw me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <div class="auth-buttons">
+                        <a class="btn btn-login hover-underline" href="{% url 'login' %}"><i class="fas fa-sign-in-alt fa-fw me-1"></i>Login</a>
+                        <a class="btn btn-signup hover-underline" href="{% url 'register' %}"><i class="fas fa-user-plus fa-fw me-1"></i>Register</a>
+                    </div>
+                    {% endif %}
+
+                    <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+                        <i class="fas fa-moon fa-fw"></i>
+                    </button>
+                </div>
+
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-grow-1">
+            {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5 mt-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="text-uppercase mb-4">About CES</h5>
+                    <p>The Citizen Engagement System provides a digital platform for citizens to submit feedback and complaints about public services, ensuring transparent and efficient resolution.</p>
+                    <div class="mt-4 social-icons">
+                        <a href="#" aria-label="Facebook" class="hover-underline"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Twitter" class="hover-underline"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="LinkedIn" class="hover-underline"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" aria-label="Instagram" class="hover-underline"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-uppercase mb-4">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a class="hover-underline" href="#">Submit Complaint</a></li>
+                        <li class="mb-2"><a class="hover-underline" href="#">Track Status</a></li>
+                        <li class="mb-2"><a class="hover-underline" href="{% url 'citizen_admin' %}">Public Dashboard</a></li>
+                        <li class="mb-2"><a class="hover-underline" href="#">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-uppercase mb-4">Contact Us</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> 123 Government Plaza, Capital City</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> +1 (800) 123-4567</li>
+                        <li class="mb-2"><i class="fas fa-envelope me-2"></i> contact@ces.gov</li>
+                        <li class="mb-2"><i class="fas fa-clock me-2"></i> Mon-Fri: 8:00 AM - 5:00 PM</li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="text-uppercase mb-4">Newsletter</h5>
+                    <p>Subscribe to our newsletter for updates on service improvements</p>
+                    <form class="mb-3">
+                        <div class="input-group mb-3">
+                            <input type="email" class="form-control" placeholder="Your email" aria-label="Your email" required>
+                            <button class="btn btn-primary" type="submit">Subscribe</button>
+                        </div>
+                        <div class="invalid-feedback">Please provide a valid email.</div>
+                    </form>
+                </div>
+            </div>
+            <hr class="my-4 bg-light opacity-10">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-0">&copy; {% now "Y" %} Citizen Engagement System. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="#" class="text-white me-3 hover-underline">Privacy Policy</a>
+                    <a href="#" class="text-white hover-underline">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to top button -->
+    <a href="#" class="back-to-top" id="backToTop">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"></script>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+            crossorigin="anonymous"></script>
+
+    <!-- Font Awesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"
+            integrity="sha512-fD9DI5bZwQxOi7MhYWnnNPlvXdp/2Pj3XSTRrFs5FQa4mizyGLnJcN6tuvUS6LbmgN1ut+XGSABKvjN0H6Aoow=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- Embedded JavaScript -->
+    <script>
+        // Show loading screen and hide content until everything is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hide the loading screen when everything is loaded
+            window.addEventListener('load', function() {
+                document.getElementById('loading-screen').style.display = 'none';
+                document.documentElement.classList.add('loaded');
+            });
+
+            // Fallback in case load event doesn't fire
+            setTimeout(function() {
+                document.getElementById('loading-screen').style.display = 'none';
+                document.documentElement.classList.add('loaded');
+            }, 3000);
+
+            // Theme switcher
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = themeToggle.querySelector('i');
+            const htmlEl = document.documentElement;
+            const currentTheme = localStorage.getItem('theme') || 'light';
+
+            // Apply saved theme
+            if (currentTheme === 'dark') {
+                htmlEl.setAttribute('data-bs-theme', 'dark');
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                htmlEl.setAttribute('data-bs-theme', 'light');
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+            }
+
+            // Toggle theme
+            themeToggle.addEventListener('click', function() {
+                if (htmlEl.getAttribute('data-bs-theme') === 'dark') {
+                    htmlEl.setAttribute('data-bs-theme', 'light');
+                    themeIcon.classList.replace('fa-sun', 'fa-moon');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    htmlEl.setAttribute('data-bs-theme', 'dark');
+                    themeIcon.classList.replace('fa-moon', 'fa-sun');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            // Back to top button
+            const backToTop = document.getElementById('backToTop');
+
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            });
+
+            backToTop.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+
+            // Initialize Bootstrap components
+            if (typeof bootstrap !== 'undefined') {
+                // Tooltips
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl, {
+                        trigger: 'hover focus'
+                    });
+                });
+
+                // Popovers
+                var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+                var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                    return new bootstrap.Popover(popoverTriggerEl, {
+                        trigger: 'focus'
+                    });
+                });
+
+                // Close alerts when dismiss button is clicked
+                document.querySelectorAll('.alert-dismissible .btn-close').forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        const alert = this.closest('.alert');
+                        alert.style.opacity = '0';
+                        setTimeout(() => {
+                            alert.remove();
+                        }, 300);
+                    });
+                });
+            }
+
+            // Enhanced smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    // Skip if it's a dropdown toggle or has other data attributes
+                    if (this.hasAttribute('data-bs-toggle') ||
+                        this.getAttribute('href') === '#' ||
+                        this.classList.contains('dropdown-toggle')) {
+                        return;
+                    }
+
+                    e.preventDefault();
+
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+
+                    if (targetElement) {
+                        // Calculate the offset considering fixed navbar
+                        const navbarHeight = document.querySelector('.navbar').offsetHeight;
+                        const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
+
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
+                        });
+
+                        // Update URL without adding to history
+                        if (history.pushState) {
+                            history.pushState(null, null, targetId);
+                        } else {
+                            location.hash = targetId;
+                        }
+                    }
+                });
+            });
+
+            // Form validation
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    let isValid = true;
+                    const requiredFields = this.querySelectorAll('[required]');
+
+                    requiredFields.forEach(field => {
+                        if (!field.value.trim()) {
+                            isValid = false;
+                            field.classList.add('is-invalid');
+
+                            // Add validation message if not exists
+                            if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('invalid-feedback')) {
+                                const feedback = document.createElement('div');
+                                feedback.className = 'invalid-feedback';
+                                feedback.textContent = 'This field is required.';
+                                field.parentNode.insertBefore(feedback, field.nextSibling);
+                            }
+                        } else {
+                            field.classList.remove('is-invalid');
+                        }
+                    });
+
+                    if (!isValid) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Scroll to first invalid field
+                        const firstInvalid = this.querySelector('.is-invalid');
+                        if (firstInvalid) {
+                            const navbarHeight = document.querySelector('.navbar').offsetHeight;
+                            const invalidPosition = firstInvalid.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
+
+                            window.scrollTo({
+                                top: invalidPosition,
+                                behavior: 'smooth'
+                            });
+
+                            firstInvalid.focus();
+                        }
+                    } else {
+                        // Show loading state on submit buttons
+                        const submitButtons = this.querySelectorAll('button[type="submit"]');
+                        submitButtons.forEach(button => {
+                            button.disabled = true;
+                            button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+                        });
+                    }
+                });
+
+                // Real-time validation
+                form.querySelectorAll('[required]').forEach(field => {
+                    field.addEventListener('input', function() {
+                        if (this.value.trim()) {
+                            this.classList.remove('is-invalid');
+                            const feedback = this.nextElementSibling;
+                            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                                feedback.remove();
+                            }
+                        } else {
+                            this.classList.add('is-invalid');
+                            if (!this.nextElementSibling || !this.nextElementSibling.classList.contains('invalid-feedback')) {
+
+                            }
+                            }
+                        });
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>

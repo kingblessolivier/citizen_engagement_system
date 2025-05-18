@@ -1,0 +1,12 @@
+asgiref==3.8.1
+diff-match-patch==20241021
+Django==5.2.1
+django-grappelli==4.0.2
+django-import-export==4.3.7
+django-jazzmin==3.0.1
+django-suit==2.0a2
+djangorestframework==3.16.0
+pillow==11.2.1
+sqlparse==0.5.3
+tablib==3.8.0
+tzdata==2025.2

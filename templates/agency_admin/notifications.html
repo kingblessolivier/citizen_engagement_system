@@ -1,0 +1,248 @@
+﻿{% extends "agency_admin/base.html" %}
+
+{% block page_title %}Notifications{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'agency_admin_dashboard' %}">Dashboard</a></li>
+<li>Notifications</li>
+{% endblock %}
+
+{% block header_actions %}
+<div class="dropdown">
+    <button class="btn" style="background-color: var(--primary-color); color: white; padding: 8px 15px; border-radius: 4px; display: inline-flex; align-items: center;">
+        <i class="fas fa-sliders-h mr-1"></i> Filter
+        <i class="fas fa-caret-down ml-2"></i>
+    </button>
+    <div class="dropdown-content" style="right: 0; min-width: 200px;">
+        <div class="dropdown-header">Filter By</div>
+        <a class="dropdown-item" href="?filter=all">
+            <i class="fas fa-bell mr-2"></i> All Notifications
+        </a>
+        <a class="dropdown-item" href="?filter=unread">
+            <i class="fas fa-envelope mr-2"></i> Unread Only
+        </a>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-header">Notification Types</div>
+        <a class="dropdown-item" href="?type=status_change">
+            <i class="fas fa-exchange-alt mr-2"></i> Status Changes
+        </a>
+        <a class="dropdown-item" href="?type=new_response">
+            <i class="fas fa-reply mr-2"></i> New Responses
+        </a>
+        <a class="dropdown-item" href="?type=assignment">
+            <i class="fas fa-user-tag mr-2"></i> Assignments
+        </a>
+        <a class="dropdown-item" href="?type=sla_warning">
+            <i class="fas fa-clock mr-2"></i> SLA Warnings
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="border: 1px solid var(--border-light); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <div class="card-header" style="background-color: var(--primary-color); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-size: 1.2rem; display: flex; align-items: center;">
+            <i class="fas fa-bell mr-2"></i> Notifications
+            {% if unread_count > 0 %}
+            <span style="background-color: white; color: var(--primary-color); border-radius: 10px; padding: 2px 8px; font-size: 0.8rem; margin-left: 10px;">
+                {{ unread_count }} Unread
+            </span>
+            {% endif %}
+        </h3>
+        <form method="post" action="#" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" style="padding: 6px 12px; background-color: white; color: var(--primary-color); border: none; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center;">
+                <i class="fas fa-check-circle mr-1"></i> Mark All Read
+            </button>
+        </form>
+    </div>
+
+    <div class="card-body" style="padding: 0;">
+        {% if notifications %}
+        <div style="max-height: 600px; overflow-y: auto;">
+            {% for notification in notifications %}
+            <div class="notification-item {% if not notification.is_read %}unread{% endif %}" style="padding: 15px 20px; border-bottom: 1px solid var(--border-light); transition: all 0.3s ease;">
+                <div style="display: flex; gap: 15px;">
+                    <div class="notification-icon" style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1rem; background-color: {{ notification.get_icon_color }};">
+                        <i class="fas fa-{{ notification.get_icon }}"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-dark);">{{ notification.get_type_display }}</h4>
+                            <span style="font-size: 0.8rem; color: var(--text-light);">{{ notification.created_at|timesince }} ago</span>
+                        </div>
+                        <p style="margin: 0 0 5px 0; font-size: 0.9rem; color: var(--text-medium);">{{ notification.message }}</p>
+                        {% if notification.complaint %}
+                        <div style="font-size: 0.8rem; color: var(--text-light);">
+                            Related to:
+                            <a href="{% url 'agency_complaint_detail' ticket_number=notification.complaint.ticket_number %}" style="color: var(--primary-color); text-decoration: none;">
+                                {{ notification.complaint.ticket_number }}
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if not notification.is_read %}
+                    <div style="flex-shrink: 0; display: flex; align-items: center;">
+                        <form method="post" action="{% url 'agency_notifications_mark_read' pk=notification.id %}" style="margin: 0;">
+                            {% csrf_token %}
+                            <button type="submit" style="padding: 5px 10px; background-color: transparent; border: 1px solid var(--success-color); color: var(--success-color); border-radius: 4px; cursor: pointer;">
+                                <i class="fas fa-check" style="font-size: 0.8rem;"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="padding: 40px; text-align: center;">
+            <div style="font-size: 3rem; color: var(--text-light); margin-bottom: 15px;">
+                <i class="fas fa-bell-slash"></i>
+            </div>
+            <h4 style="margin-bottom: 10px; color: var(--text-dark);">No notifications found</h4>
+            <p style="color: var(--text-medium);">You're all caught up!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if notifications.has_other_pages %}
+    <div style="padding: 15px 20px; border-top: 1px solid var(--border-light);">
+        <div style="display: flex; justify-content: center;">
+            <div style="display: flex; gap: 5px;">
+                {% if notifications.has_previous %}
+                <a href="?page=1" style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ notifications.previous_page_number }}" style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+                {% endif %}
+
+                {% for num in notifications.paginator.page_range %}
+                    {% if notifications.number == num %}
+                    <span style="padding: 8px 12px; border: 1px solid var(--primary-color); background-color: var(--primary-color); color: white; border-radius: 4px;">{{ num }}</span>
+                    {% elif num > notifications.number|add:'-3' and num < notifications.number|add:'3' %}
+                    <a href="?page={{ num }}" style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if notifications.has_next %}
+                <a href="?page={{ notifications.next_page_number }}" style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ notifications.paginator.num_pages }}" style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notification-item {
+        transition: all 0.2s ease;
+    }
+
+    .notification-item:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+
+    .notification-item.unread {
+        background-color: rgba(139, 195, 74, 0.05);
+    }
+
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: white;
+        min-width: 220px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border-radius: 5px;
+        z-index: 1;
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+
+    .dropdown-header {
+        padding: 10px 15px;
+        font-size: 0.8rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background-color: var(--border-light);
+        margin: 5px 0;
+    }
+
+    .dropdown-item {
+        padding: 8px 15px;
+        text-decoration: none;
+        display: block;
+        color: var(--text-dark);
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background-color: var(--bg-light);
+        color: var(--primary-color);
+    }
+
+    .dropdown-item i {
+        width: 20px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize dropdown functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown')) {
+            document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+                dropdown.style.display = 'none';
+            });
+        }
+    });
+
+    // Toggle dropdown on button click
+    document.querySelectorAll('.dropdown button').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = this.closest('.dropdown');
+            const content = dropdown.querySelector('.dropdown-content');
+            const isVisible = content.style.display === 'block';
+
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown-content').forEach(d => {
+                d.style.display = 'none';
+            });
+
+            // Toggle this dropdown
+            content.style.display = isVisible ? 'none' : 'block';
+        });
+    });
+
+    // Search functionality could be added here if needed
+});
+</script>
+{% endblock %}

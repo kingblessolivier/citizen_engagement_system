@@ -1,0 +1,459 @@
+﻿{% extends 'home/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-dark: #0B1210;
+        --primary-color: #1A3A32;
+        --primary-light: #2D5E52;
+        --secondary-color: #4CAF50;
+        --accent-color: #8BC34A;
+        --error-color: #FF5252;
+        --success-color: #4CAF50;
+        --warning-color: #FFC107;
+        --text-dark: #263238;
+        --text-medium: #546E7A;
+        --text-light: #90A4AE;
+        --bg-light: #F5F7FA;
+        --border-color: #CFD8DC;
+        --border-light: #ECEFF1;
+        --white: #FFFFFF;
+    }
+
+    /* Status colors */
+    .status-submitted { color: #2196F3; }  /* Blue */
+    .status-acknowledged { color: #673AB7; }  /* Deep Purple */
+    .status-in_progress { color: #FF9800; }  /* Orange */
+    .status-resolved { color: #4CAF50; }  /* Green */
+    .status-rejected { color: #F44336; }  /* Red */
+    .status-reopened { color: #FF5722; }  /* Deep Orange */
+
+    /* Priority colors */
+    .priority-low { color: #4CAF50; }  /* Green */
+    .priority-medium { color: #FFC107; }  /* Amber */
+    .priority-high { color: #FF9800; }  /* Orange */
+    .priority-critical { color: #F44336; }  /* Red */
+
+    .tracking-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .tracking-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .tracking-header h1 {
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .search-form {
+        background: var(--bg-light);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--primary-color);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-light);
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: 0.8rem;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .submit-btn:hover {
+        background: var(--primary-light);
+    }
+
+    .error-message {
+        color: var(--error-color);
+        margin-top: 1rem;
+        display: none;
+    }
+
+    .results-section {
+        display: none;
+        margin-top: 2rem;
+    }
+
+    .complaint-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .complaint-title {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .status-card {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .status-item {
+        flex: 1;
+        min-width: 150px;
+        background: var(--bg-light);
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .status-label {
+        font-size: 0.9rem;
+        color: var(--text-medium);
+        margin-bottom: 0.3rem;
+    }
+
+    .status-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .agency-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: var(--bg-light);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .agency-logo {
+        width: 60px;
+        height: 60px;
+        border-radius: 6px;
+        object-fit: contain;
+        background: var(--white);
+        padding: 0.3rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .agency-info {
+        flex: 1;
+    }
+
+    .agency-name {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.2rem;
+    }
+
+    .agency-code {
+        color: var(--text-medium);
+        font-size: 0.9rem;
+    }
+
+    .agency-contact {
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-medium);
+    }
+
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border-color);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+
+    .timeline-dot {
+        position: absolute;
+        left: -28px;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    .timeline-content {
+        background: var(--white);
+        padding: 1rem;
+        border-radius: 6px;
+        border: 1px solid var(--border-light);
+    }
+
+    .timeline-date {
+        font-size: 0.85rem;
+        color: var(--text-medium);
+        margin-bottom: 0.3rem;
+    }
+
+    .timeline-status {
+        font-weight: 500;
+        color: var(--primary-color);
+        margin-bottom: 0.3rem;
+    }
+
+    .timeline-notes {
+        color: var(--text-dark);
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .timeline-author {
+        font-size: 0.8rem;
+        color: var(--text-medium);
+        margin-top: 0.3rem;
+        font-style: italic;
+    }
+
+    .no-updates {
+        color: var(--text-medium);
+        font-style: italic;
+    }
+
+    @media (max-width: 600px) {
+        .status-card {
+            flex-direction: column;
+        }
+
+        .agency-card {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="tracking-container">
+    <div class="tracking-header">
+        <h1>Complaint Status Tracker</h1>
+        <p>Track the status updates of your complaint</p>
+    </div>
+
+    <div class="search-form">
+        <form id="trackingForm" method="GET">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="ticketNumber" class="form-label">Complaint Ticket Number</label>
+                <input type="text" id="ticketNumber" name="ticket_number" class="form-control"
+                       placeholder="e.g. CES-20230515-0001" required>
+            </div>
+            <button type="submit" class="submit-btn">Track Complaint</button>
+        </form>
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <div id="resultsSection" class="results-section">
+        <div class="complaint-header">
+            <h2 class="complaint-title" id="complaintTitle"></h2>
+            <div class="ticket-meta">
+                Ticket #<span id="displayTicketNumber"></span> •
+                Created on <span id="createdAt"></span> •
+                Category: <span id="complaintCategory"></span>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <div class="status-item">
+                <div class="status-label">Current Status</div>
+                <div class="status-value" id="currentStatus"></div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Priority</div>
+                <div class="status-value" id="priorityValue"></div>
+            </div>
+        </div>
+
+        <div class="agency-card" id="agencyCard">
+            <img src="" alt="Agency Logo" class="agency-logo" id="agencyLogo">
+            <div class="agency-info">
+                <div class="agency-name" id="agencyName"></div>
+                <div class="agency-code" id="agencyCode"></div>
+                <div class="agency-contact">
+                    <i class="fas fa-phone"></i> <span id="agencyPhone"></span>
+                </div>
+            </div>
+        </div>
+
+        <h3>Status History</h3>
+        <div class="timeline" id="timeline">
+            <!-- Timeline items will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const trackingForm = document.getElementById('trackingForm');
+        const resultsSection = document.getElementById('resultsSection');
+        const errorMessage = document.getElementById('errorMessage');
+        const agencyCard = document.getElementById('agencyCard');
+
+        // Handle form submission
+        trackingForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const ticketNumber = document.getElementById('ticketNumber').value.trim();
+
+            if (!ticketNumber) {
+                showError('Please enter a ticket number');
+                return;
+            }
+
+            fetchComplaintData(ticketNumber);
+        });
+
+        function fetchComplaintData(ticketNumber) {
+            errorMessage.style.display = 'none';
+
+            fetch(`?ticket_number=${encodeURIComponent(ticketNumber)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        displayResults(data);
+                    } else {
+                        showError(data.error || 'Complaint not found');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showError('An error occurred while fetching complaint data');
+                });
+        }
+
+        function displayResults(data) {
+            // Update basic info
+            document.getElementById('displayTicketNumber').textContent = data.ticket_number;
+            document.getElementById('complaintTitle').textContent = data.title;
+            document.getElementById('createdAt').textContent = data.created_at;
+            document.getElementById('complaintCategory').textContent = data.category || 'Not specified';
+
+            // Update status and priority with appropriate colors
+            const statusElement = document.getElementById('currentStatus');
+            statusElement.textContent = data.current_status_display;
+            statusElement.className = 'status-value status-' + data.current_status;
+
+            const priorityElement = document.getElementById('priorityValue');
+            priorityElement.textContent = data.priority_display;
+            priorityElement.className = 'status-value priority-' + data.priority;
+
+            // Update agency info if available
+            if (data.agency) {
+                document.getElementById('agencyName').textContent = data.agency.name;
+                document.getElementById('agencyCode').textContent = data.agency.short_code;
+                document.getElementById('agencyPhone').textContent = data.agency.contact_phone || 'Not available';
+
+                if (data.agency.logo) {
+                    document.getElementById('agencyLogo').src = data.agency.logo;
+                } else {
+                    document.getElementById('agencyLogo').src = "{% static 'img/default-agency.png' %}";
+                }
+                agencyCard.style.display = 'flex';
+            } else {
+                agencyCard.style.display = 'none';
+            }
+
+            // Update timeline
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+
+            if (data.updates && data.updates.length > 0) {
+                data.updates.forEach(update => {
+                    const date = new Date(update.timestamp);
+                    const formattedDate = date.toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    const item = document.createElement('div');
+                    item.className = 'timeline-item';
+                    item.innerHTML = `
+                        <div class="timeline-dot">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">${formattedDate}</div>
+                            <div class="timeline-status">
+                                Changed from <span class="status-${update.old_status}">${update.old_status}</span>
+                                to <span class="status-${update.new_status}">${update.new_status}</span>
+                            </div>
+                            ${update.notes ? `<div class="timeline-notes">${update.notes}</div>` : ''}
+                            ${update.changed_by__username ? `<div class="timeline-author">Updated by: ${update.changed_by__username}</div>` : ''}
+                        </div>
+                    `;
+                    timeline.appendChild(item);
+                });
+            } else {
+                const noUpdates = document.createElement('p');
+                noUpdates.className = 'no-updates';
+                noUpdates.textContent = 'No status updates available';
+                timeline.appendChild(noUpdates);
+            }
+
+            // Show results
+            resultsSection.style.display = 'block';
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            resultsSection.style.display = 'none';
+        }
+    });
+</script>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}

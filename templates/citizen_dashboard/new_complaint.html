@@ -1,0 +1,465 @@
+﻿{% extends "citizen_dashboard/citizen_base.html" %}
+
+{% block page_title %}Submit New Complaint | {{ request.user.get_full_name }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'citizen_admin' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'complaint_list' %}">My Complaints</a></li>
+<li class="breadcrumb-item active">New Complaint</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .complaint-form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+    }
+
+    .form-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .form-header h2 {
+        color: var(--primary-dark);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-header p {
+        color: var(--text-medium);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-dark);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(26, 58, 50, 0.1);
+    }
+
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .image-upload-container {
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s;
+    }
+
+    .image-upload-container:hover {
+        border-color: var(--primary-color);
+    }
+
+    .image-upload-container i {
+        font-size: 2.5rem;
+        color: var(--text-light);
+        margin-bottom: 1rem;
+    }
+
+    .image-upload-container p {
+        color: var(--text-medium);
+        margin-bottom: 1rem;
+    }
+
+    .image-preview-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .image-preview {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border-light);
+    }
+
+    .image-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .remove-image {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        width: 24px;
+        height: 24px;
+        background: var(--error-color);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .image-preview:hover .remove-image {
+        opacity: 1;
+    }
+
+    .location-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border-light);
+    }
+
+    .map-container {
+        height: 250px;
+        width: 100%;
+        border-radius: 8px;
+        margin-top: 1rem;
+        background-color: var(--bg-light);
+        overflow: hidden;
+    }
+
+    .form-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border-light);
+    }
+
+    .btn-submit {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .btn-submit:hover {
+        background: var(--primary-light);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-cancel {
+        color: var(--text-medium);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+
+    .btn-cancel:hover {
+        color: var(--text-dark);
+        background: var(--bg-light);
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .form-check-input {
+        width: 20px;
+        height: 20px;
+        margin: 0;
+    }
+
+    .form-check-label {
+        color: var(--text-medium);
+    }
+
+    .error-message {
+        color: var(--error-color);
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .complaint-form-container {
+            padding: 1rem;
+        }
+
+        .form-card {
+            padding: 1.5rem;
+        }
+
+        .form-footer {
+            flex-direction: column-reverse;
+            gap: 1rem;
+        }
+
+        .btn-submit,
+        .btn-cancel {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Google Maps for location selection
+        const mapContainer = document.getElementById('map');
+        const latitudeInput = document.getElementById('id_latitude');
+        const longitudeInput = document.getElementById('id_longitude');
+        const locationDescription = document.getElementById('id_location_description');
+
+        if (mapContainer && latitudeInput && longitudeInput) {
+            // Initialize map
+            const map = new google.maps.Map(mapContainer, {
+                center: { lat: -1.2921, lng: 36.8219 }, // Default to Nairobi coordinates
+                zoom: 12,
+                disableDefaultUI: true,
+                zoomControl: true
+            });
+
+            // Add marker
+            const marker = new google.maps.Marker({
+                map: map,
+                draggable: true
+            });
+
+            // Add search box
+            const searchBox = new google.maps.places.SearchBox(
+                document.getElementById('location-search')
+            );
+
+            // Listen for search box selection
+            searchBox.addListener('places_changed', function() {
+                const places = searchBox.getPlaces();
+                if (places.length === 0) return;
+
+                const place = places[0];
+                const location = place.geometry.location;
+
+                map.setCenter(location);
+                marker.setPosition(location);
+
+                latitudeInput.value = location.lat();
+                longitudeInput.value = location.lng();
+                locationDescription.value = place.formatted_address || '';
+            });
+
+            // Listen for map clicks
+            map.addListener('click', function(e) {
+                marker.setPosition(e.latLng);
+                latitudeInput.value = e.latLng.lat();
+                longitudeInput.value = e.latLng.lng();
+
+                // Reverse geocode to get address
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ location: e.latLng }, function(results, status) {
+                    if (status === 'OK' && results[0]) {
+                        locationDescription.value = results[0].formatted_address;
+                    }
+                });
+            });
+
+            // Initialize with existing values if editing
+            if (latitudeInput.value && longitudeInput.value) {
+                const initialLocation = new google.maps.LatLng(
+                    parseFloat(latitudeInput.value),
+                    parseFloat(longitudeInput.value)
+                );
+                map.setCenter(initialLocation);
+                marker.setPosition(initialLocation);
+            }
+        }
+
+        // Image upload preview
+        const imageInput = document.getElementById('id_images');
+        const previewContainer = document.getElementById('image-preview-container');
+
+        if (imageInput && previewContainer) {
+            imageInput.addEventListener('change', function(e) {
+                previewContainer.innerHTML = '';
+
+                Array.from(e.target.files).forEach(file => {
+                    if (!file.type.startsWith('image/')) return;
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.createElement('div');
+                        preview.className = 'image-preview';
+                        preview.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview">
+                            <div class="remove-image" onclick="removeImagePreview(this)">
+                                <i class="fas fa-times"></i>
+                            </div>
+                        `;
+                        previewContainer.appendChild(preview);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+        }
+    });
+
+    function removeImagePreview(element) {
+        element.parentElement.remove();
+        // TODO: Implement actual removal from form data
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="complaint-form-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h2>Submit New Complaint</h2>
+            <p>Please provide detailed information about your issue</p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="complaint-form">
+            {% csrf_token %}
+
+            <!-- Complaint Details Section -->
+            <div class="form-group">
+                <label for="id_title" class="form-label">Complaint Title*</label>
+                <input type="text" name="title" id="id_title" class="form-control"
+                       placeholder="Brief summary of your complaint" required
+                       value="{{ form.title.value|default_if_none:'' }}">
+                {% if form.title.errors %}
+                <div class="error-message">{{ form.title.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_category" class="form-label">Service Category*</label>
+                <select name="category" id="id_category" class="form-control" required>
+                    <option value="">Select a category</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}"
+                            {% if form.category.value == category.id %}selected{% endif %}>
+                        {{ category.name }} ({{ category.agency.short_code }})
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if form.category.errors %}
+                <div class="error-message">{{ form.category.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_description" class="form-label">Detailed Description*</label>
+                <textarea name="description" id="id_description" class="form-control"
+                          placeholder="Please provide detailed information about your complaint"
+                          required>{{ form.description.value|default_if_none:'' }}</textarea>
+                {% if form.description.errors %}
+                <div class="error-message">{{ form.description.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_priority" class="form-label">Priority*</label>
+                <select name="priority" id="id_priority" class="form-control" required>
+                    <option value="">Select priority level</option>
+                    <option value="low" {% if form.priority.value == 'low' %}selected{% endif %}>Low</option>
+                    <option value="medium" {% if form.priority.value == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="high" {% if form.priority.value == 'high' %}selected{% endif %}>High</option>
+                    <option value="critical" {% if form.priority.value == 'critical' %}selected{% endif %}>Critical</option>
+                </select>
+                {% if form.priority.errors %}
+                <div class="error-message">{{ form.priority.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Image Upload Section -->
+            <div class="form-group">
+                <label class="form-label">Upload Images (Optional)</label>
+                <div class="image-upload-container">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & drop images here or click to browse</p>
+                    <input type="file" name="images" id="id_images"
+                           class="form-control" multiple accept="image/*">
+                    <small class="text-muted">Maximum 5 images (5MB each)</small>
+                </div>
+                <div id="image-preview-container" class="image-preview-container"></div>
+                {% if form.images.errors %}
+                <div class="error-message">{{ form.images.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Location Section -->
+            <div class="location-section">
+                <h3 class="form-label">Location Information</h3>
+                <p class="text-muted">Help us locate the issue by providing location details</p>
+
+                <div class="form-group">
+                    <input type="text" id="location-search" class="form-control"
+                           placeholder="Search for a location...">
+                </div>
+
+                <div class="form-group">
+                    <label for="id_location_description" class="form-label">Location Description</label>
+                    <textarea name="location_description" id="id_location_description"
+                              class="form-control"
+                              placeholder="Describe the exact location of the issue">{{ form.location_description.value|default_if_none:'' }}</textarea>
+                </div>
+
+                <div class="map-container" id="map"></div>
+
+                <input type="hidden" name="latitude" id="id_latitude"
+                       value="{{ form.latitude.value|default_if_none:'' }}">
+                <input type="hidden" name="longitude" id="id_longitude"
+                       value="{{ form.longitude.value|default_if_none:'' }}">
+            </div>
+
+            <!-- Anonymous Submission -->
+            <div class="form-group">
+                <div class="form-check">
+                    <input type="checkbox" name="is_anonymous" id="id_is_anonymous"
+                           class="form-check-input" {% if form.is_anonymous.value %}checked{% endif %}>
+                    <label for="id_is_anonymous" class="form-check-label">Submit anonymously</label>
+                </div>
+                <small class="text-muted">Your name will not be visible to the public</small>
+            </div>
+
+            <!-- Form Footer -->
+            <div class="form-footer">
+                <a href="{% url 'complaint_list' %}" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-paper-plane mr-1"></i> Submit Complaint
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

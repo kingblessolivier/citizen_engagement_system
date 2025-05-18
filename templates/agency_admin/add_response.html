@@ -1,0 +1,144 @@
+﻿{% extends "agency_admin/base.html" %}
+
+{% block page_title %}Add Response{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'agency_admin_dashboard' %}">Dashboard</a></li>
+<li><a href="{% url 'agency_complaint_list' %}">Complaints</a></li>
+<li><a href="{% url 'agency_complaint_detail' ticket_number=complaint.ticket_number %}">#{{ complaint.ticket_number }}</a></li>
+<li>Add Response</li>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="card" style="max-width: 800px; margin: 0 auto; border: 1px solid var(--border-light); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <div class="card-header" style="background-color: var(--primary-color); color: white; padding: 15px 20px;">
+            <h3 style="margin: 0; font-size: 1.2rem; display: flex; align-items: center;">
+                <i class="fas fa-reply mr-2"></i>
+                Add Response to Complaint #{{ complaint.ticket_number }}
+            </h3>
+        </div>
+
+        <div class="card-body" style="padding: 25px;">
+            <form method="post" style="margin: 0;">
+                {% csrf_token %}
+
+                <!-- Response Text Area -->
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-dark);">
+                        Response <span style="color: var(--error-color);">*</span>
+                    </label>
+                    <textarea id="text" name="text" style="width: 100%; min-height: 200px; padding: 15px; border: 1px solid var(--border-light); border-radius: 4px; font-family: 'Poppins', sans-serif; font-size: 0.95rem; resize: vertical;">{{ form.text.value|default:'' }}</textarea>
+                </div>
+
+                <!-- Checkbox Options -->
+                <div style="margin-bottom: 25px; display: flex; flex-direction: column; gap: 15px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="is_internal" name="is_internal" style="margin-right: 10px; width: 18px; height: 18px; accent-color: var(--primary-color);">
+                        <span>Mark as internal note (not visible to citizen)</span>
+                    </label>
+
+                    {% if not complaint.is_anonymous %}
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="notify_citizen" name="notify_citizen" checked style="margin-right: 10px; width: 18px; height: 18px; accent-color: var(--primary-color);">
+                        <span>Notify citizen about this response</span>
+                    </label>
+                    {% endif %}
+                </div>
+
+                <!-- Form Actions -->
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-light); padding-top: 20px;">
+                    <a href="{% url 'agency_complaint_detail' ticket_number=complaint.ticket_number %}"
+                       style="padding: 10px 20px; background-color: var(--text-light); color: white; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center;">
+                        <i class="fas fa-arrow-left mr-2"></i> Cancel
+                    </a>
+                    <button type="submit"
+                            style="padding: 10px 20px; background-color: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center;">
+                        <i class="fas fa-paper-plane mr-2"></i> Submit Response
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Textarea styling */
+    textarea {
+        transition: all 0.3s ease;
+    }
+
+    textarea:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.2);
+    }
+
+    /* Checkbox styling */
+    input[type="checkbox"] {
+        cursor: pointer;
+    }
+
+    /* Rich text editor overrides */
+    .note-editor {
+        border-radius: 4px;
+        border-color: var(--border-light) !important;
+    }
+
+    .note-editor.note-frame .note-statusbar {
+        background-color: var(--bg-light);
+        border-top-color: var(--border-light);
+    }
+
+    .note-btn {
+        background-color: white !important;
+        border-color: var(--border-light) !important;
+    }
+
+    .note-btn:hover {
+        background-color: var(--bg-light) !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize rich text editor
+    $('#text').summernote({
+        height: 250,
+        toolbar: [
+            ['style', ['bold', 'italic', 'underline', 'clear']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link']],
+            ['view', ['codeview']]
+        ],
+        placeholder: 'Type your response here...',
+        dialogsInBody: true,
+        callbacks: {
+            onInit: function() {
+                // Style the editor to match our theme
+                $('.note-editor').css('border-radius', '4px');
+                $('.note-editor').css('border-color', 'var(--border-light)');
+            }
+        }
+    });
+
+    // Form validation
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const textContent = $('#text').summernote('code').replace(/<[^>]*>/g, '').trim();
+            if (!textContent) {
+                e.preventDefault();
+                alert('Please enter a response before submitting');
+                $('#text').summernote('focus');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

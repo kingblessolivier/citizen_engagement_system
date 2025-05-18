@@ -1,0 +1,99 @@
+﻿{% extends "agency_admin/base.html" %}
+
+{% block page_title %}New Message{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'agency_admin_dashboard' %}">Dashboard</a></li>
+<li><a href="{% url 'agency_messages' %}">Messages</a></li>
+<li class="active">New Message</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-paper-plane mr-2"></i>Compose Message
+                </h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="id_recipient">Recipient *</label>
+                        <select class="form-control" id="id_recipient" name="recipient" required>
+                            <option value="">Select recipient...</option>
+                            {% for user in recipients %}
+                            <option value="{{ user.id }}" {% if form.recipient.value == user.id %}selected{% endif %}>
+                                {{ user.get_full_name }} ({{ user.get_role_display }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.recipient.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.recipient.errors.as_text }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if complaint %}
+                    <div class="form-group">
+                        <label>Related Complaint</label>
+                        <div class="form-control-plaintext">
+                            <a href="{% url 'agency_complaint_detail' ticket_number=complaint.ticket_number %}">
+                                {{ complaint.ticket_number }}: {{ complaint.title }}
+                            </a>
+                        </div>
+                        <input type="hidden" name="complaint" value="{{ complaint.ticket_number }}">
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label for="id_text">Message *</label>
+                        <textarea class="form-control" id="id_text" name="text" rows="8" required>{{ form.text.value|default:'' }}</textarea>
+                        {% if form.text.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.text.errors.as_text }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'agency_messages' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left mr-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane mr-1"></i> Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize select2 for recipient dropdown
+    $('#id_recipient').select2({
+        placeholder: "Select recipient",
+        width: '100%'
+    });
+
+    // Initialize rich text editor
+    $('#id_text').summernote({
+        height: 300,
+        toolbar: [
+            ['style', ['bold', 'italic', 'underline', 'clear']],
+            ['para', ['ul', 'ol']],
+            ['insert', ['link']],
+            ['view', ['codeview']]
+        ]
+    });
+});
+</script>
+{% endblock %}

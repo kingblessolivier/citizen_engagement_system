@@ -1,0 +1,640 @@
+﻿
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Citizen Portal{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #0B1210;
+            --primary-color: #1A3A32;
+            --primary-light: #2D5E52;
+            --secondary-color: #4CAF50;
+            --accent-color: #8BC34A;
+            --error-color: #FF5252;
+            --success-color: #4CAF50;
+            --warning-color: #FFC107;
+            --text-dark: #263238;
+            --text-medium: #546E7A;
+            --text-light: #90A4AE;
+            --bg-light: #F5F7FA;
+            --border-color: #CFD8DC;
+            --border-light: #ECEFF1;
+            --white: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* Main Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+
+            width: 280px;
+            background: var(--primary-dark);
+            color: var(--white);
+            height: 100vh;
+            position: fixed;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar-header h3 {
+            color: var(--white);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            color: var(--text-light);
+            font-size: 0.8rem;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-category {
+            color: var(--text-light);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 15px 25px 5px;
+            margin-top: 10px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 25px;
+            color: var(--white);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--accent-color);
+        }
+
+        .menu-item.active {
+            background: var(--primary-color);
+            color: var(--accent-color);
+        }
+
+        .menu-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: var(--accent-color);
+        }
+
+        .menu-item i {
+            margin-right: 15px;
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu-item .badge {
+            margin-left: auto;
+            background: var(--accent-color);
+            color: var(--primary-dark);
+            font-size: 0.7rem;
+            padding: 3px 6px;
+            border-radius: 10px;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            transition: all 0.3s ease;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background: var(--white);
+            padding: 0 30px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border: 1px solid var(--border-light);
+            border-radius: 30px;
+            background: var(--bg-light);
+            transition: all 0.3s ease;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.2);
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-item {
+            margin-left: 20px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-item .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--error-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            margin-left: 25px;
+        }
+
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+            border: 2px solid var(--accent-color);
+        }
+
+        .user-profile .user-info {
+            line-height: 1.3;
+        }
+
+        .user-profile .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-profile .user-role {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        /* Dropdowns */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            position: absolute;
+            right: 0;
+            top: 50px;
+            background: var(--white);
+            min-width: 250px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .dropdown.active .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-light);
+            font-weight: 600;
+        }
+
+        .dropdown-footer {
+            padding: 10px;
+            text-align: center;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .dropdown-footer a {
+            color: var(--primary-color);
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+
+        /* Notification Item */
+        .notification-item {
+            padding: 12px 15px;
+            display: flex;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--border-light);
+            transition: all 0.3s ease;
+        }
+
+        .notification-item:hover {
+            background: var(--bg-light);
+        }
+
+        .notification-item.unread {
+            background: rgba(139, 195, 74, 0.05);
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .notification-icon i {
+            color: var(--primary-color);
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 500;
+            font-size: 0.85rem;
+            margin-bottom: 3px;
+        }
+
+        .notification-message {
+            font-size: 0.8rem;
+            color: var(--text-medium);
+            margin-bottom: 5px;
+        }
+
+        .notification-time {
+            font-size: 0.7rem;
+            color: var(--text-light);
+        }
+
+        /* Content Area */
+        .content-wrapper {
+            padding: 30px;
+            min-height: calc(100vh - 70px);
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .content-title h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .content-title .breadcrumb {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin-top: 5px;
+        }
+
+        .content-title .breadcrumb li {
+            font-size: 0.85rem;
+            color: var(--text-medium);
+        }
+
+        .content-title .breadcrumb li:after {
+            content: '/';
+            margin: 0 8px;
+        }
+
+        .content-title .breadcrumb li:last-child:after {
+            content: '';
+        }
+
+        .content-title .breadcrumb li a {
+            color: var(--text-medium);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .content-title .breadcrumb li a:hover {
+            color: var(--primary-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: block !important;
+            }
+        }
+
+        .menu-toggle {
+            display: none;
+            margin-right: 15px;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>Citizen Portal</h3>
+                <p>Administration Dashboard</p>
+            </div>
+
+            <div class="sidebar-menu">
+                <div class="menu-category">Main</div>
+                <a href="{% url 'citizen_admin' %}" class="menu-item {% if request.resolver_match.url_name == 'citizen_dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <div class="menu-category">Complaints</div>
+                <a href="{% url 'complaint_list' %}" class="menu-item {% if request.resolver_match.url_name == 'citizen_complaints' %}active{% endif %}">
+                    <i class="fas fa-list-ul"></i>
+                    <span>My Complaints</span>
+                    {% if user.get_active_complaints.count > 0 %}
+                    <span class="badge">{{ user.get_active_complaints.count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'submit_complaint' %}" class="menu-item {% if request.resolver_match.url_name == 'citizen_complaint_create' %}active{% endif %}">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>New Complaint</span>
+                </a>
+
+                <div class="menu-category">Communication</div>
+                <a href="{% url 'notification_list' %}" class="menu-item {% if request.resolver_match.url_name == 'citizen_notifications' %}active{% endif %}">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                    {% if user.get_unread_notifications_count > 0 %}
+                    <span class="badge">{{ user.get_unread_notifications_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>Messages</span>
+                    {% if user.get_unread_messages_count > 0 %}
+                    <span class="badge">{{ user.get_unread_messages_count }}</span>
+                    {% endif %}
+                </a>
+
+                <div class="menu-category">Account</div>
+                <a href="#" class="menu-item {% if request.resolver_match.url_name == 'citizen_profile_update' %}active{% endif %}">
+                    <i class="fas fa-user-cog"></i>
+                    <span>Profile Settings</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Navigation -->
+            <nav class="top-nav">
+                <div class="menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search complaints, messages...">
+                </div>
+
+                <div class="nav-actions">
+                    <div class="nav-item dropdown" id="notifications-dropdown">
+                        <i class="fas fa-bell"></i>
+                        {% if user.get_unread_notifications_count > 0 %}
+                        <span class="badge">{{ user.get_unread_notifications_count }}</span>
+                        {% endif %}
+
+                        <div class="dropdown-content">
+                            <div class="dropdown-header">Notifications</div>
+                            <div class="notification-item unread">
+                                <div class="notification-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Complaint Resolved</div>
+                                    <div class="notification-message">Your complaint #CES-20230517-0001 has been resolved</div>
+                                    <div class="notification-time">2 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="notification-item">
+                                <div class="notification-icon">
+                                    <i class="fas fa-comment-alt"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <div class="notification-title">New Message</div>
+                                    <div class="notification-message">You have received a new message from City Services</div>
+                                    <div class="notification-time">5 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="notification-item">
+                                <div class="notification-icon">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Action Required</div>
+                                    <div class="notification-message">Please provide feedback for your resolved complaint</div>
+                                    <div class="notification-time">1 day ago</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-footer">
+                                <a href="#">View All Notifications</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nav-item dropdown" id="messages-dropdown">
+                        <i class="fas fa-envelope"></i>
+                        {% if user.get_unread_messages_count > 0 %}
+                        <span class="badge">{{ user.get_unread_messages_count }}</span>
+                        {% endif %}
+
+                        <div class="dropdown-content">
+                            <div class="dropdown-header">Messages</div>
+                            <div class="notification-item unread">
+                                <div class="notification-icon">
+                                    <i class="fas fa-user-tie"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <div class="notification-title">City Services</div>
+                                    <div class="notification-message">We need additional information about your complaint</div>
+                                    <div class="notification-time">3 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="notification-item">
+                                <div class="notification-icon">
+                                    <i class="fas fa-user-tie"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Public Works</div>
+                                    <div class="notification-message">Your road repair request has been scheduled</div>
+                                    <div class="notification-time">2 days ago</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-footer">
+                                <a href="#">View All Messages</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="user-profile dropdown" id="profile-dropdown">
+                        <img src="" alt="Profile">
+                        <div class="user-info">
+                            <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                            <div class="user-role">Citizen</div>
+                        </div>
+
+                        <div class="dropdown-content" style="width: 200px;">
+                            <a href="#" class="notification-item">
+                                <i class="fas fa-user-cog mr-2"></i> Profile Settings
+                            </a>
+                            <a href="#" class="notification-item">
+                                <i class="fas fa-cog mr-2"></i> Account Settings
+                            </a>
+                            <div class="dropdown-footer">
+                                <a href="{% url 'logout' %}">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Content Wrapper -->
+            <div class="content-wrapper">
+                <div class="content-header">
+                    <div class="content-title">
+                        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                        <ul class="breadcrumb">
+                            <li><a href="#">Home</a></li>
+                            {% block breadcrumbs %}{% endblock %}
+                        </ul>
+                    </div>
+                    {% block header_actions %}{% endblock %}
+                </div>
+
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle sidebar on mobile
+        document.querySelector('.menu-toggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        // Dropdown functionality
+        document.querySelectorAll('.dropdown').forEach(dropdown => {
+            dropdown.addEventListener('click', function(e) {
+                this.classList.toggle('active');
+
+                // Close other dropdowns
+                document.querySelectorAll('.dropdown').forEach(otherDropdown => {
+                    if (otherDropdown !== this) {
+                        otherDropdown.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown').forEach(dropdown => {
+                    dropdown.classList.remove('active');
+                });
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

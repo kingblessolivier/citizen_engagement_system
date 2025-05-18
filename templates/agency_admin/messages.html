@@ -1,0 +1,207 @@
+﻿{% extends "agency_admin/base.html" %}
+
+{% block page_title %}Messages{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'agency_admin_dashboard' %}">Dashboard</a></li>
+<li class="active">Messages</li>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'agency_send_message' %}" class="btn btn-primary">
+    <i class="fas fa-plus mr-1"></i> New Message
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-inbox mr-2"></i>Conversations
+                </h3>
+            </div>
+            <div class="card-body p-0">
+                {% if conversations %}
+                <div class="list-group list-group-flush">
+                    {% for conversation in conversations %}
+                    <a href="{% url 'agency_messages' %}?conversation={{ conversation.other_user.id }}" 
+                       class="list-group-item list-group-item-action {% if current_conversation == conversation.other_user.id %}active{% endif %}">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ conversation.other_user.profile_picture.url|default:'/static/images/default-profile.png' }}" 
+                                 class="rounded-circle mr-3" width="40" height="40" 
+                                 alt="{{ conversation.other_user.get_full_name }}">
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ conversation.other_user.get_full_name }}</strong>
+                                    <small class="text-{% if current_conversation == conversation.other_user.id %}white{% else %}muted{% endif %}">
+                                        {{ conversation.last_message.timestamp|timesince }} ago
+                                    </small>
+                                </div>
+                                <p class="mb-0 text-truncate" style="max-width: 200px;">
+                                    {% if conversation.last_message.sender == request.user %}
+                                    <span class="text-{% if current_conversation == conversation.other_user.id %}white-50{% else %}muted{% endif %}">You:</span>
+                                    {% endif %}
+                                    {{ conversation.last_message.text|truncatechars:40 }}
+                                </p>
+                            </div>
+                            {% if conversation.unread_count > 0 %}
+                            <span class="badge badge-{% if current_conversation == conversation.other_user.id %}light{% else %}primary{% endif %} ml-2">
+                                {{ conversation.unread_count }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                    <h4>No conversations yet</h4>
+                    <p class="text-muted">Start a new conversation with a team member</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        {% if current_conversation %}
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-user mr-2"></i>{{ current_recipient.get_full_name }}
+                </h3>
+                <div>
+                    <button class="btn btn-light btn-sm" data-toggle="modal" data-target="#newMessageModal">
+                        <i class="fas fa-reply mr-1"></i> Reply
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0" style="overflow-y: auto; height: 400px;">
+                <div class="p-3">
+                    {% for message in messages %}
+                    <div class="mb-3 {% if message.sender == request.user %}text-right{% endif %}">
+                        <div class="d-flex {% if message.sender == request.user %}justify-content-end{% else %}justify-content-start{% endif %}">
+                            {% if message.sender != request.user %}
+                            <img src="{{ message.sender.profile_picture.url|default:'/static/images/default-profile.png' }}" 
+                                 class="rounded-circle mr-2" width="30" height="30" 
+                                 alt="{{ message.sender.get_full_name }}">
+                            {% endif %}
+                            <div>
+                                <div class="message-bubble {% if message.sender == request.user %}bg-primary text-white{% else %}bg-light{% endif %}">
+                                    {{ message.text|linebreaks }}
+                                </div>
+                                <small class="text-muted">
+                                    {{ message.timestamp|date:"M d, Y H:i" }}
+                                    {% if message.is_read and message.sender == request.user %}
+                                    <i class="fas fa-check ml-1 text-success"></i>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                <i class="fas fa-comment-dots fa-4x text-muted mb-3"></i>
+                <h4>Select a conversation</h4>
+                <p class="text-muted">Choose a conversation from the list to view messages</p>
+                <a href="{% url 'agency_send_message' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus mr-1"></i> Start New Conversation
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- New Message Modal -->
+<div class="modal fade" id="newMessageModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">New Message to {{ current_recipient.get_full_name }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="{% url 'agency_send_message' %}">
+                {% csrf_token %}
+                <input type="hidden" name="recipient" value="{{ current_recipient.id }}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <textarea class="form-control" name="text" rows="5" 
+                                  placeholder="Type your message here..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .message-bubble {
+        display: inline-block;
+        padding: 10px 15px;
+        border-radius: 18px;
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+    
+    .bg-light.message-bubble {
+        border: 1px solid #eee;
+    }
+    
+    .list-group-item.active {
+        z-index: 0;
+    }
+    
+    .card-body {
+        scroll-behavior: smooth;
+    }
+    
+    @media (max-width: 768px) {
+        .row {
+            flex-direction: column-reverse;
+        }
+        
+        .col-md-4, .col-md-8 {
+            max-width: 100%;
+            flex: 0 0 100%;
+        }
+        
+        .card {
+            margin-bottom: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Scroll to bottom of messages
+    const messagesContainer = $('.card-body')[1];
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // Auto-focus textarea in modal
+    $('#newMessageModal').on('shown.bs.modal', function() {
+        $(this).find('textarea').focus();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,897 @@
+﻿{% extends "citizen_dashboard/citizen_base.html" %}
+
+{% block page_title %}{{ complaint.title }} | {{ complaint.ticket_number }}{% endblock %}
+{% load static %}
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'complaint_list' %}">My Complaints</a></li>
+<li class="breadcrumb-item active">{{ complaint.ticket_number }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Complaint Detail Page Specific Styles */
+    .complaint-detail-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .complaint-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .complaint-title {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .complaint-meta {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-medium);
+        font-size: 0.9rem;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: capitalize;
+    }
+
+    .status-submitted {
+        background: rgba(158, 158, 158, 0.1);
+        color: #9E9E9E;
+    }
+
+    .status-acknowledged {
+        background: rgba(33, 150, 243, 0.1);
+        color: var(--info-color);
+    }
+
+    .status-in_progress {
+        background: rgba(255, 152, 0, 0.1);
+        color: #FF9800;
+    }
+
+    .status-resolved {
+        background: rgba(76, 175, 80, 0.1);
+        color: var(--success-color);
+    }
+
+    .status-rejected {
+        background: rgba(244, 67, 54, 0.1);
+        color: var(--error-color);
+    }
+
+    .priority-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .priority-low {
+        background: rgba(76, 175, 80, 0.1);
+        color: var(--success-color);
+    }
+
+    .priority-medium {
+        background: rgba(255, 152, 0, 0.1);
+        color: #FF9800;
+    }
+
+    .priority-high {
+        background: rgba(244, 67, 54, 0.1);
+        color: var(--error-color);
+    }
+
+    .complaint-content {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 992px) {
+        .complaint-content {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .complaint-description {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 1.5rem;
+    }
+
+    .complaint-description h4 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .complaint-description p {
+        color: var(--text-dark);
+        line-height: 1.7;
+    }
+
+    .complaint-sidebar {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        height: fit-content;
+    }
+
+    .sidebar-section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .sidebar-section:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .sidebar-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .sidebar-item {
+        margin-bottom: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .sidebar-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .sidebar-label {
+        color: var(--text-medium);
+        font-size: 0.9rem;
+    }
+
+    .sidebar-value {
+        color: var(--text-dark);
+        font-weight: 500;
+        text-align: right;
+    }
+
+    .agency-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: var(--bg-light);
+        border-radius: 8px;
+    }
+
+    .agency-logo {
+        width: 60px;
+        height: 60px;
+        border-radius: 6px;
+        object-fit: contain;
+        background: var(--white);
+        padding: 0.25rem;
+        box-shadow: var(--shadow-xs);
+    }
+
+    .agency-info {
+        flex: 1;
+    }
+
+    .agency-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .agency-contact {
+        font-size: 0.8rem;
+        color: var(--text-medium);
+    }
+
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border-color);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+
+    .timeline-dot {
+        position: absolute;
+        left: -28px;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.7rem;
+    }
+
+    .timeline-content {
+        background: var(--white);
+        padding: 1.25rem;
+        border-radius: 8px;
+        box-shadow: var(--shadow-xs);
+    }
+
+    .timeline-date {
+        font-size: 0.8rem;
+        color: var(--text-medium);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .timeline-title {
+        font-size: 0.95rem;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .timeline-text {
+        color: var(--text-dark);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .timeline-author {
+        font-size: 0.8rem;
+        color: var(--text-medium);
+        font-style: italic;
+    }
+
+    .responses-section {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .response-item {
+        padding: 1.25rem;
+        border-radius: 8px;
+        background: var(--bg-light);
+        margin-bottom: 1rem;
+    }
+
+    .response-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .response-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .response-author {
+        font-weight: 600;
+        color: var(--primary-color);
+        font-size: 0.9rem;
+    }
+
+    .response-date {
+        color: var(--text-medium);
+        font-size: 0.8rem;
+    }
+
+    .response-text {
+        color: var(--text-dark);
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    .response-form {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: var(--bg-light);
+        border-radius: 8px;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-medium);
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 0.9rem;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(45, 94, 82, 0.1);
+    }
+
+    textarea.form-control {
+        min-height: 120px;
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-check-input {
+        margin: 0;
+    }
+
+    .form-check-label {
+        font-size: 0.9rem;
+        color: var(--text-medium);
+    }
+
+    .btn-submit {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-submit:hover {
+        background: var(--primary-dark);
+    }
+
+    .images-section {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .image-item {
+        height: 180px;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: var(--shadow-xs);
+        transition: all 0.2s;
+    }
+
+    .image-item:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .image-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .image-caption {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        text-align: center;
+    }
+
+    .feedback-section {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        margin-top: 2rem;
+    }
+
+    .feedback-item {
+        padding: 1.25rem;
+        background: var(--bg-light);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .feedback-rating {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .rating-stars {
+        color: #FFC107;
+    }
+
+    .feedback-comments {
+        color: var(--text-dark);
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    .no-content {
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-medium);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        color: white;
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-medium);
+    }
+
+    .btn-outline:hover {
+        background: var(--bg-light);
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        .complaint-detail-container {
+            padding: 1rem;
+        }
+
+        .complaint-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .complaint-meta {
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .images-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="complaint-detail-container">
+    <!-- Complaint Header -->
+    <div class="complaint-header">
+        <div>
+            <h1 class="complaint-title">{{ complaint.title }}</h1>
+            <div class="complaint-meta">
+                <div class="meta-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>{{ complaint.ticket_number }}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-calendar"></i>
+                    <span>Submitted {{ complaint.created_at|date:"M d, Y" }}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Last updated {{ complaint.updated_at|timesince }} ago</span>
+                </div>
+            </div>
+        </div>
+        <div>
+            <span class="status-badge status-{{ complaint.status|slugify }}">
+                {{ complaint.get_status_display }}
+            </span>
+            <span class="priority-badge priority-{{ complaint.priority|slugify }}">
+                {{ complaint.get_priority_display }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="complaint-content">
+        <!-- Left Column -->
+        <div class="complaint-main">
+            <!-- Complaint Description -->
+            <div class="complaint-description">
+                <h4><i class="fas fa-align-left mr-1"></i>Description</h4>
+                <p>{{ complaint.description|linebreaksbr }}</p>
+
+                {% if complaint.location_description %}
+                <div class="mt-3">
+                    <h4><i class="fas fa-map-marker-alt mr-1"></i>Location Details</h4>
+                    <p>{{ complaint.location_description }}</p>
+
+                    {% if complaint.latitude and complaint.longitude %}
+                    <div class="mt-2">
+                        <a href="https://www.google.com/maps?q={{ complaint.latitude }},{{ complaint.longitude }}"
+                           target="_blank" class="btn btn-outline btn-sm">
+                            <i class="fas fa-map mr-1"></i> View on Map
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Status Timeline -->
+            <div class="responses-section">
+                <h3 class="section-title"><i class="fas fa-history mr-1"></i>Status History</h3>
+
+                {% if status_updates %}
+                <div class="timeline">
+                    <!-- Initial submission -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">
+                                <i class="fas fa-calendar-alt"></i>
+                                {{ complaint.created_at|date:"M d, Y H:i" }}
+                            </div>
+                            <h4 class="timeline-title">Complaint Submitted</h4>
+                            <p class="timeline-text">The complaint was initially submitted.</p>
+                            <p class="timeline-author">
+                                By: {{ complaint.citizen_name|default:"Anonymous" }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Status updates -->
+                    {% for update in status_updates %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">
+                                <i class="fas fa-calendar-alt"></i>
+                                {{ update.timestamp|date:"M d, Y H:i" }}
+                            </div>
+                            <h4 class="timeline-title">
+                                Status Changed to {{ update.get_new_status_display }}
+                            </h4>
+                            {% if update.notes %}
+                            <p class="timeline-text">{{ update.notes }}</p>
+                            {% endif %}
+                            <p class="timeline-author">
+                                {% if update.changed_by %}
+                                By: {{ update.changed_by.get_full_name }} ({{ update.changed_by.get_role_display }})
+                                {% else %}
+                                By: System
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-content">
+                    <p>No status updates available</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Responses Section -->
+            <div class="responses-section">
+                <h3 class="section-title"><i class="fas fa-comments mr-1"></i>Responses</h3>
+
+                {% if responses %}
+                    {% for response in responses %}
+                    <div class="response-item">
+                        <div class="response-header">
+                            <div class="response-author">
+                                {{ response.author.get_full_name }} ({{ response.author.get_role_display }})
+                            </div>
+                            <div class="response-date">
+                                {{ response.created_at|date:"M d, Y H:i" }}
+                            </div>
+                        </div>
+                        <div class="response-text">
+                            {{ response.text|linebreaksbr }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="no-content">
+                    <p>No responses yet</p>
+                </div>
+                {% endif %}
+
+                <!-- Response Form -->
+                {% if complaint.status != 'resolved' and complaint.status != 'rejected' %}
+                <div class="response-form">
+                    <h4 class="section-title"><i class="fas fa-reply mr-1"></i>Add Response</h4>
+                    <form method="post" action="{% url 'complaint_detail' complaint.ticket_number %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="submit_response" value="1">
+                        <div class="form-group">
+                            <textarea name="text" class="form-control" placeholder="Type your response here..." required></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" name="is_internal" id="is_internal" class="form-check-input">
+                            <label for="is_internal" class="form-check-label">Mark as internal note (visible only to staff)</label>
+                        </div>
+                        <button type="submit" class="btn-submit">Submit Response</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Images Section -->
+            {% if images %}
+            <div class="images-section">
+                <h3 class="section-title"><i class="fas fa-images mr-1"></i>Attached Images</h3>
+                <div class="images-grid">
+                    {% for image in images %}
+                    <div class="image-item">
+                        <img src="{{ image.image.url }}" alt="Complaint image">
+                        {% if image.caption %}
+                        <div class="image-caption">{{ image.caption }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        <!-- Right Sidebar -->
+        <div class="complaint-sidebar">
+            <!-- Complaint Details -->
+            <div class="sidebar-section">
+                <h4 class="sidebar-title"><i class="fas fa-info-circle"></i> Complaint Details</h4>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Status</span>
+                    <span class="sidebar-value status-badge status-{{ complaint.status|slugify }}">
+                        {{ complaint.get_status_display }}
+                    </span>
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Priority</span>
+                    <span class="sidebar-value priority-badge priority-{{ complaint.priority|slugify }}">
+                        {{ complaint.get_priority_display }}
+                    </span>
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Category</span>
+                    <span class="sidebar-value">{{ complaint.category.name|default:"-" }}</span>
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Submitted</span>
+                    <span class="sidebar-value">{{ complaint.created_at|date:"M d, Y" }}</span>
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Last Updated</span>
+                    <span class="sidebar-value">{{ complaint.updated_at|timesince }} ago</span>
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Visibility</span>
+                    <span class="sidebar-value">
+                        {% if complaint.is_public %}
+                        <i class="fas fa-eye text-success"></i> Public
+                        {% else %}
+                        <i class="fas fa-eye-slash text-muted"></i> Private
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Anonymous</span>
+                    <span class="sidebar-value">
+                        {% if complaint.is_anonymous %}
+                        <i class="fas fa-check-circle text-success"></i> Yes
+                        {% else %}
+                        <i class="fas fa-times-circle text-muted"></i> No
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Citizen Details -->
+            <div class="sidebar-section">
+                <h4 class="sidebar-title"><i class="fas fa-user"></i> Citizen Details</h4>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Name</span>
+                    <span class="sidebar-value">
+                        {% if complaint.is_anonymous %}Anonymous{% else %}{{ complaint.citizen_name|default:"-" }}{% endif %}
+                    </span>
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Email</span>
+                    <span class="sidebar-value">
+                        {% if complaint.is_anonymous %}Hidden{% else %}{{ complaint.citizen_email|default:"-" }}{% endif %}
+                    </span>
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Phone</span>
+                    <span class="sidebar-value">
+                        {% if complaint.is_anonymous %}Hidden{% else %}{{ complaint.citizen_phone|default:"-" }}{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Agency Details -->
+            {% if complaint.assigned_agency %}
+            <div class="sidebar-section">
+                <h4 class="sidebar-title"><i class="fas fa-building"></i> Assigned Agency</h4>
+                <div class="agency-card">
+                    {% if complaint.assigned_agency.logo %}
+                    <img src="{{ complaint.assigned_agency.logo.url }}" alt="{{ complaint.assigned_agency.name }} logo" class="agency-logo">
+                    {% else %}
+                    <img src="{% static 'img/default-agency.png' %}" alt="Default agency logo" class="agency-logo">
+                    {% endif %}
+                    <div class="agency-info">
+                        <div class="agency-name">{{ complaint.assigned_agency.name }}</div>
+                        {% if complaint.assigned_agency.contact_phone %}
+                        <div class="agency-contact">
+                            <i class="fas fa-phone"></i> {{ complaint.assigned_agency.contact_phone }}
+                        </div>
+                        {% endif %}
+                        {% if complaint.assigned_agency.contact_email %}
+                        <div class="agency-contact">
+                            <i class="fas fa-envelope"></i> {{ complaint.assigned_agency.contact_email }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Assigned Staff -->
+            {% if complaint.assigned_to %}
+            <div class="sidebar-section">
+                <h4 class="sidebar-title"><i class="fas fa-user-tie"></i> Assigned Staff</h4>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Name</span>
+                    <span class="sidebar-value">{{ complaint.assigned_to.get_full_name }}</span>
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-label">Role</span>
+                    <span class="sidebar-value">{{ complaint.assigned_to.get_role_display }}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="sidebar-section">
+                <h4 class="sidebar-title"><i class="fas fa-cog"></i> Actions</h4>
+                <div class="action-buttons">
+                    {% if complaint.status != 'resolved' and complaint.status != 'rejected' %}
+                    <a href="{% url 'edit_complaint' complaint.id %}" class="btn btn-outline">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'complaint_messages' complaint.id %}" class="btn btn-outline">
+                        <i class="fas fa-comments"></i> Messages
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Image click to enlarge
+        const images = document.querySelectorAll('.image-item img');
+        images.forEach(img => {
+            img.addEventListener('click', function() {
+                // You could implement a lightbox here
+                window.open(this.src, '_blank');
+            });
+        });
+    });
+</script>
+{% endblock %}

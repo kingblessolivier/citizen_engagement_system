@@ -1,0 +1,201 @@
+﻿{% extends "agency_admin/base.html" %}
+
+{% block page_title %}Team Members{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'agency_admin_dashboard' %}">Dashboard</a></li>
+<li>Team Members</li>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'agency_team_member_add' %}" class="btn" style="background-color: var(--primary-color); color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none;">
+    <i class="fas fa-user-plus mr-1"></i> Add Team Member
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="border: 1px solid var(--border-light); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <div class="card-header" style="background-color: var(--primary-color); color: white; padding: 15px 20px;">
+        <h3 style="margin: 0; font-size: 1.2rem; display: flex; align-items: center;">
+            <i class="fas fa-users mr-2"></i>Team Members
+            <span style="background-color: white; color: var(--primary-color); border-radius: 10px; padding: 2px 8px; font-size: 0.8rem; margin-left: 10px;">
+                {{ team_members.paginator.count }}
+            </span>
+        </h3>
+    </div>
+
+    <div class="card-body" style="padding: 0;">
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background-color: var(--bg-light);">
+                    <tr>
+                        <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-light);">Name</th>
+                        <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-light);">Role</th>
+                        <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-light);">Email</th>
+                        <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-light);">Phone</th>
+                        <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-light);">Active Complaints</th>
+                        <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-light);">Status</th>
+                        <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-light);">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in team_members %}
+                    <tr style="border-bottom: 1px solid var(--border-light); transition: background-color 0.2s;">
+                        <td style="padding: 12px 15px;">
+                            <div style="display: flex; align-items: center;">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--bg-light); display: flex; align-items: center; justify-content: center; margin-right: 12px; overflow: hidden;">
+                                    {% if member.profile_picture %}
+                                    <img src="{{ member.profile_picture.url }}" alt="{{ member.get_full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    {% else %}
+                                    <i class="fas fa-user" style="color: var(--text-medium);"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 500;">{{ member.get_full_name }}</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-medium);">@{{ member.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 12px 15px;">
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem;
+                                {% if member.role == 'agent' %}background-color: #e3f2fd; color: #1976d2;
+                                {% elif member.role == 'agency_admin' %}background-color: #e8f5e9; color: #388e3c;
+                                {% else %}background-color: #f3e5f5; color: #7b1fa2;{% endif %}">
+                                {{ member.get_role_display }}
+                            </span>
+                        </td>
+                        <td style="padding: 12px 15px;">{{ member.email }}</td>
+                        <td style="padding: 12px 15px;">{{ member.phone|default:"-" }}</td>
+                        <td style="padding: 12px 15px;">
+                            <span style="display: inline-block; padding: 4px 8px; border-radius: 10px; background-color: var(--primary-light); color: white; font-size: 0.8rem;">
+                                {{ member.assigned_complaints.count }}
+                            </span>
+                        </td>
+                        <td style="padding: 12px 15px;">
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem;
+                                {% if member.is_active %}background-color: var(--success-color); color: white;
+                                {% else %}background-color: var(--text-light); color: white;{% endif %}">
+                                {% if member.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </td>
+                        <td style="padding: 12px 15px;">
+                            <div style="display: flex; gap: 5px;">
+                                <a href="{% url 'agency_team_member_edit' pk=member.id %}"
+                                   style="padding: 6px 10px; background-color: var(--warning-color); color: white; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center;">
+                                    <i class="fas fa-edit" style="font-size: 0.8rem;"></i>
+                                </a>
+                                {% if member != request.user %}
+                                <a href="#"
+                                   style="padding: 6px 10px; background-color: var(--error-color); color: white; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center;"
+                                   onclick="document.getElementById('deactivateModal{{ member.id }}').style.display='block'">
+                                    <i class="fas fa-user-slash" style="font-size: 0.8rem;"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+
+                            <!-- Deactivate Modal -->
+                            <div id="deactivateModal{{ member.id }}" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                                <div style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 80%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light);">
+                                        <h3 style="margin: 0; color: var(--error-color);">Confirm Deactivation</h3>
+                                        <span onclick="document.getElementById('deactivateModal{{ member.id }}').style.display='none'" style="cursor: pointer; font-size: 1.5rem;">&times;</span>
+                                    </div>
+                                    <div style="margin-bottom: 20px;">
+                                        <p>Are you sure you want to deactivate <strong>{{ member.get_full_name }}</strong>?</p>
+                                        <p style="color: var(--error-color);">This will prevent them from accessing the system.</p>
+                                    </div>
+                                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                                        <button onclick="document.getElementById('deactivateModal{{ member.id }}').style.display='none'"
+                                                style="padding: 8px 15px; background-color: var(--text-light); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                            Cancel
+                                        </button>
+                                        <form method="post" action="#" style="margin: 0;">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                    style="padding: 8px 15px; background-color: var(--error-color); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                                Deactivate
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="padding: 40px 15px; text-align: center;">
+                            <div style="max-width: 400px; margin: 0 auto;">
+                                <div style="font-size: 3rem; color: var(--text-light); margin-bottom: 15px;">
+                                    <i class="fas fa-users-slash"></i>
+                                </div>
+                                <h4 style="margin-bottom: 10px; color: var(--text-dark);">No team members found</h4>
+                                <p style="color: var(--text-medium); margin-bottom: 20px;">Add your first team member to get started</p>
+                                <a href="{% url 'agency_team_member_add' %}"
+                                   style="padding: 8px 15px; background-color: var(--primary-color); color: white; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center;">
+                                    <i class="fas fa-user-plus mr-1"></i> Add Team Member
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if team_members.has_other_pages %}
+    <div style="padding: 15px 20px; border-top: 1px solid var(--border-light);">
+        <div style="display: flex; justify-content: center;">
+            <div style="display: flex; gap: 5px;">
+                {% if team_members.has_previous %}
+                <a href="?page=1" style="padding: 6px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ team_members.previous_page_number }}" style="padding: 6px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+                {% endif %}
+
+                {% for num in team_members.paginator.page_range %}
+                    {% if team_members.number == num %}
+                    <span style="padding: 6px 12px; border: 1px solid var(--primary-color); background-color: var(--primary-color); color: white; border-radius: 4px;">{{ num }}</span>
+                    {% elif num > team_members.number|add:'-3' and num < team_members.number|add:'3' %}
+                    <a href="?page={{ num }}" style="padding: 6px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if team_members.has_next %}
+                <a href="?page={{ team_members.next_page_number }}" style="padding: 6px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ team_members.paginator.num_pages }}" style="padding: 6px 12px; border: 1px solid var(--border-light); border-radius: 4px; text-decoration: none; color: var(--primary-color);">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    tr:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+
+    .btn i {
+        margin-right: 5px;
+    }
+</style>
+
+<script>
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        {% for member in team_members %}
+        if (event.target == document.getElementById('deactivateModal{{ member.id }}')) {
+            document.getElementById('deactivateModal{{ member.id }}').style.display = "none";
+        }
+        {% endfor %}
+    }
+</script>
+{% endblock %}

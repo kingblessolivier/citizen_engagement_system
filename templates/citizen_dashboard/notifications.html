@@ -1,0 +1,461 @@
+﻿{% extends "citizen_dashboard/citizen_base.html" %}
+
+{% block page_title %}Notifications | {{ request.user.get_full_name }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'complaint_list' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Notifications</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Notifications Page Specific Styles */
+    .notifications-container {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .page-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .notifications-list {
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+    }
+
+    .notification-item {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        align-items: flex-start;
+        transition: all 0.2s;
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+    .notification-item:hover {
+        background: rgba(45, 94, 82, 0.03);
+    }
+
+    .notification-item.unread {
+        background: rgba(33, 150, 243, 0.05);
+    }
+
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--bg-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .notification-icon i {
+        color: var(--primary-color);
+    }
+
+    .notification-content {
+        flex: 1;
+    }
+
+    .notification-message {
+        margin-bottom: 0.25rem;
+        line-height: 1.5;
+    }
+
+    .notification-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .notification-time {
+        font-size: 0.8rem;
+        color: var(--text-medium);
+    }
+
+    .notification-complaint {
+        font-size: 0.85rem;
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+
+    .notification-complaint:hover {
+        text-decoration: underline;
+    }
+
+    .notification-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-left: 1rem;
+    }
+
+    .mark-as-read {
+        color: var(--text-light);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 4px;
+    }
+
+    .mark-as-read:hover {
+        color: var(--primary-color);
+        background: rgba(45, 94, 82, 0.1);
+    }
+
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--border-color);
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+
+    .empty-state h4 {
+        color: var(--text-medium);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+    }
+
+    .notifications-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .notifications-title {
+        font-weight: 500;
+        color: var(--primary-dark);
+        margin-bottom: 0;
+    }
+
+    .mark-all-read {
+        color: var(--primary-color);
+        font-size: 0.9rem;
+        text-decoration: none;
+    }
+
+    .mark-all-read:hover {
+        text-decoration: underline;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border-light);
+    }
+
+    .page-item {
+        margin: 0 0.25rem;
+    }
+
+    .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        border: 1px solid var(--border-light);
+        color: var(--text-medium);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .page-link:hover {
+        background: var(--bg-light);
+    }
+
+    .page-item.active .page-link {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .page-item.disabled .page-link {
+        color: var(--text-light);
+        pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+        .notifications-container {
+            padding: 1rem;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .page-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        .notification-item {
+            flex-direction: column;
+        }
+
+        .notification-icon {
+            margin-bottom: 0.75rem;
+        }
+
+        .notification-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .notification-actions {
+            margin-left: 0;
+            margin-top: 0.5rem;
+            align-self: flex-end;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mark notification as read when clicked
+        document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Don't mark as read if clicking on action buttons
+                if (e.target.closest('.mark-as-read') || e.target.closest('.notification-actions')) {
+                    return;
+                }
+
+                const notificationId = this.dataset.notificationId;
+                if (notificationId && this.classList.contains('unread')) {
+                    fetch(`/notifications/mark-as-read/${notificationId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            this.classList.remove('unread');
+                            updateUnreadCount();
+                        }
+                    });
+                }
+            });
+        });
+
+        // Mark all as read
+        const markAllReadBtn = document.getElementById('mark-all-read');
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                fetch('/notifications/mark-all-read/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        document.querySelectorAll('.notification-item.unread').forEach(item => {
+                            item.classList.remove('unread');
+                        });
+                        updateUnreadCount();
+                    }
+                });
+            });
+        }
+
+        // Update unread count in navbar
+        function updateUnreadCount() {
+            const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+            const countBadge = document.querySelector('.notification-count');
+            if (countBadge) {
+                if (unreadCount > 0) {
+                    countBadge.textContent = unreadCount;
+                    countBadge.style.display = 'flex';
+                } else {
+                    countBadge.style.display = 'none';
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="notifications-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Notifications</h1>
+            <p class="text-muted">Stay updated on your complaint activities</p>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'complaint_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left mr-1"></i> Back to Complaints
+            </a>
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="notifications-list">
+        <div class="notifications-header">
+            <h3 class="notifications-title">
+                <i class="fas fa-bell mr-1"></i> Recent Notifications
+            </h3>
+            {% if unread_count > 0 %}
+            <a href="#" id="mark-all-read" class="mark-all-read">
+                <i class="fas fa-check-circle mr-1"></i> Mark all as read
+            </a>
+            {% endif %}
+        </div>
+
+        {% if notifications %}
+            {% for notification in notifications %}
+            <div class="notification-item {% if not notification.is_read %}unread{% endif %}"
+                 data-notification-id="{{ notification.id }}">
+                <div class="notification-icon">
+                    {% if notification.notification_type == 'status_update' %}
+                    <i class="fas fa-exchange-alt"></i>
+                    {% elif notification.notification_type == 'new_response' %}
+                    <i class="fas fa-comment-alt"></i>
+                    {% elif notification.notification_type == 'assigned' %}
+                    <i class="fas fa-user-tie"></i>
+                    {% else %}
+                    <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                </div>
+                <div class="notification-content">
+                    <div class="notification-message">
+                        {{ notification.message }}
+                    </div>
+                    <div class="notification-meta">
+                        <span class="notification-time">
+                            {{ notification.created_at|timesince }} ago
+                        </span>
+                        {% if notification.complaint %}
+                        <a href="{{ notification.complaint.get_absolute_url }}" class="notification-complaint">
+                            View Complaint <i class="fas fa-arrow-right"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if not notification.is_read %}
+                <div class="notification-actions">
+                    <button class="mark-as-read" title="Mark as read">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="pagination">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-bell-slash"></i>
+            <h4>No Notifications</h4>
+            <p>You don't have any notifications yet. When you do, they'll appear here.</p>
+            <a href="{% url 'complaint_list' %}" class="btn btn-primary">
+                <i class="fas fa-ticket-alt mr-1"></i> View Your Complaints
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

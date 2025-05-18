@@ -1,0 +1,1064 @@
+﻿{% extends "citizen_dashboard/citizen_base.html" %}
+
+{% block page_title %}Citizen Dashboard | {{ request.user.get_full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-dark: #0B1210;
+        --primary-color: #1A3A32;
+        --primary-light: #2D5E52;
+        --secondary-color: #4CAF50;
+        --accent-color: #8BC34A;
+        --error-color: #FF5252;
+        --success-color: #4CAF50;
+        --warning-color: #FFC107;
+        --info-color: #2196F3;
+        --text-dark: #263238;
+        --text-medium: #546E7A;
+        --text-light: #90A4AE;
+        --bg-light: #F5F7FA;
+        --border-color: #CFD8DC;
+        --border-light: #ECEFF1;
+        --white: #FFFFFF;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+        --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+        --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+        --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    /* Base Styles */
+    body {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: var(--bg-light);
+        color: var(--text-dark);
+        line-height: 1.6;
+    }
+
+    /* Dashboard Layout */
+    .dashboard-container {
+        padding: 2rem;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+    }
+
+    /* Welcome Header */
+    .welcome-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .welcome-header::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+
+    .welcome-header h2 {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        position: relative;
+    }
+
+    .welcome-header p {
+        opacity: 0.9;
+        margin-bottom: 0;
+        position: relative;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+        border: none;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+    }
+
+    .stat-card.active::after {
+        background: var(--primary-light);
+    }
+
+    .stat-card.resolved::after {
+        background: var(--success-color);
+    }
+
+    .stat-card.pending::after {
+        background: var(--warning-color);
+    }
+
+    .stat-card.notifications::after {
+        background: var(--accent-color);
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--text-medium);
+        opacity: 0.8;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        color: var(--primary-dark);
+    }
+
+    .stat-label {
+        font-size: 0.95rem;
+        color: var(--text-medium);
+        margin-bottom: 1.5rem;
+        display: block;
+    }
+
+    .stat-link {
+        color: var(--primary-color);
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        transition: color 0.2s;
+        text-decoration: none;
+    }
+
+    .stat-link:hover {
+        color: var(--primary-light);
+    }
+
+    .stat-link i {
+        margin-left: 8px;
+        font-size: 0.9rem;
+        transition: transform 0.2s;
+    }
+
+    .stat-link:hover i {
+        transform: translateX(3px);
+    }
+
+    /* Main Content Grid */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+
+    @media (max-width: 992px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Cards */
+    .dashboard-card {
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: var(--shadow-md);
+        margin-bottom: 2rem;
+        transition: var(--transition);
+    }
+
+    .dashboard-card:hover {
+        box-shadow: var(--shadow-lg);
+    }
+
+    .card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-header h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--primary-dark);
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Tables */
+    .complaint-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .complaint-table th {
+        background: var(--bg-light);
+        color: var(--text-medium);
+        font-weight: 500;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 1rem;
+        text-align: left;
+    }
+
+    .complaint-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-light);
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+
+    .complaint-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .complaint-table tr:hover td {
+        background: rgba(45, 94, 82, 0.03);
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: capitalize;
+    }
+
+    .status-open {
+        background: rgba(255, 152, 0, 0.1);
+        color: #FF9800;
+    }
+
+    .status-in-progress {
+        background: rgba(33, 150, 243, 0.1);
+        color: var(--info-color);
+    }
+
+    .status-resolved {
+        background: rgba(76, 175, 80, 0.1);
+        color: var(--success-color);
+    }
+
+    /* Messages */
+    .message-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .message-item {
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--border-light);
+        transition: background 0.2s;
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .message-item:last-child {
+        border-bottom: none;
+    }
+
+    .message-item.unread {
+        background: rgba(139, 195, 74, 0.05);
+        border-left: 3px solid var(--accent-color);
+    }
+
+    .message-item:hover {
+        background: rgba(45, 94, 82, 0.03);
+    }
+
+    .message-sender {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .sender-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--bg-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .sender-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .sender-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .sender-info h5 {
+        font-size: 0.95rem;
+        margin-bottom: 0.1rem;
+        color: var(--primary-dark);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sender-info small {
+        color: var(--text-light);
+        font-size: 0.75rem;
+    }
+
+    .message-preview {
+        color: var(--text-medium);
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Notifications */
+    .notification-item {
+        display: flex;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border-light);
+        color: var(--text-dark);
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+    .notification-item.unread {
+        background: rgba(41, 182, 246, 0.05);
+        border-left: 3px solid var(--info-color);
+    }
+
+    .notification-item:hover {
+        background: rgba(45, 94, 82, 0.03);
+    }
+
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: rgba(41, 182, 246, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .notification-icon i {
+        color: var(--info-color);
+        font-size: 1.1rem;
+    }
+
+    .notification-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .notification-content h6 {
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .notification-content p {
+        font-size: 0.85rem;
+        color: var(--text-medium);
+        margin-bottom: 0.25rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .notification-content small {
+        font-size: 0.75rem;
+        color: var(--text-light);
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .quick-action-btn {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        background: var(--white);
+        border: 1px solid var(--border-light);
+        color: var(--text-dark);
+        font-weight: 500;
+        text-decoration: none;
+        transition: var(--transition);
+    }
+
+    .quick-action-btn:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .quick-action-btn i {
+        margin-right: 0.75rem;
+        font-size: 1.1rem;
+    }
+
+    /* Empty States */
+    .empty-state {
+        padding: 2.5rem 1rem;
+        text-align: center;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--border-color);
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+
+    .empty-state h4 {
+        color: var(--text-medium);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-in {
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+
+    /* Chart Container */
+    .chart-container {
+        position: relative;
+        height: 250px;
+        width: 100%;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .stat-card {
+            margin-bottom: 1rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+        }
+
+        .welcome-header {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Welcome Header -->
+    <div class="welcome-header animate-in">
+        <h2>Welcome back, {{ request.user.get_full_name|default:request.user.username }}</h2>
+        <p>Here's what's happening with your complaints and services</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card active animate-in delay-1">
+            <i class="fas fa-tasks stat-icon"></i>
+            <div class="stat-value">{{ active_complaints.count }}</div>
+            <span class="stat-label">Active Complaints</span>
+            <a href="#" class="stat-link">
+                View all <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+
+        <div class="stat-card resolved animate-in delay-2">
+            <i class="fas fa-check-circle stat-icon"></i>
+            <div class="stat-value">{{ resolved_complaints.count }}</div>
+            <span class="stat-label">Resolved Cases</span>
+            <a href="#" class="stat-link">
+                View history <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+
+        <div class="stat-card pending animate-in delay-3">
+            <i class="fas fa-clock stat-icon"></i>
+            <div class="stat-value">{{ pending_feedback.count }}</div>
+            <span class="stat-label">Pending Feedback</span>
+            <a href="#" class="stat-link">
+                Provide feedback <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+
+        <div class="stat-card notifications animate-in delay-4">
+            <i class="fas fa-bell stat-icon"></i>
+            <div class="stat-value">{{ unread_notifications }}</div>
+            <span class="stat-label">Unread Notifications</span>
+            <a href="#" class="stat-link">
+                View notifications <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-grid">
+        <!-- Left Column -->
+        <div class="left-column">
+            <!-- Active Complaints -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>Your Active Complaints</h3>
+                    <a href="#" class="btn btn-primary" data-bs-toggle="tooltip" title="Submit new complaint">
+                        <i class="fas fa-plus mr-1"></i> New
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if active_complaints %}
+                    <div class="table-responsive">
+                        <table class="complaint-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticket #</th>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Last Update</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for complaint in active_complaints|slice:":5" %}
+                                <tr>
+                                    <td>
+                                        <a href="#" class="font-weight-bold text-primary">
+                                            #{{ complaint.ticket_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ complaint.title|truncatechars:30 }}</td>
+                                    <td>{{ complaint.category.name|default:"-" }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ complaint.status|slugify }}">
+                                            {{ complaint.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ complaint.updated_at|timesince }} ago</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle"></i>
+                        <h4>No Active Complaints</h4>
+                        <p>You currently have no active complaints</p>
+                        <a href="#" class="btn btn-primary">
+                            Submit New Complaint
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Complaint Statistics -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>Your Complaint Statistics</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Status Distribution</h5>
+                            <div class="chart-container">
+                                <canvas id="complaintStatusChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Monthly Activity</h5>
+                            <div class="chart-container">
+                                <canvas id="monthlyComplaintsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Messages -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>Recent Messages</h3>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_messages %}
+                    <div class="message-list">
+                        {% for message in recent_messages %}
+                        <a href="#"
+                           class="message-item {% if not message.is_read %}unread{% endif %}"
+                           data-message-id="{{ message.id }}">
+                            <div class="message-sender">
+                                <div class="sender-avatar">
+                                    {% if message.sender.profile.photo %}
+                                        <img src="{{ message.sender.profile.photo.url }}" alt="{{ message.sender.get_full_name }}">
+                                    {% else %}
+                                        <i class="fas fa-user text-muted"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="sender-info">
+                                    <h5>{{ message.sender.get_full_name|default:message.sender.username }}</h5>
+                                    <small>{{ message.created_at|timesince }} ago • {{ message.complaint.title|truncatechars:25 }}</small>
+                                </div>
+                            </div>
+                            <div class="message-preview">
+                                {{ message.text|truncatechars:120 }}
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-envelope"></i>
+                        <h4>No Recent Messages</h4>
+                        <p>You have no recent messages from agencies</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-column">
+            <!-- Notifications -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>Notifications</h3>
+                    <a href="#" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_notifications %}
+                    <div class="notification-list">
+                        {% for notification in recent_notifications %}
+                        <a href="#"
+                           class="notification-item {% if not notification.is_read %}unread{% endif %}"
+                           data-notification-id="{{ notification.id }}">
+                            <div class="notification-icon">
+                                {% if notification.notification_type == 'status_change' %}
+                                    <i class="fas fa-sync-alt"></i>
+                                {% elif notification.notification_type == 'new_response' %}
+                                    <i class="fas fa-reply"></i>
+                                {% elif notification.notification_type == 'feedback_request' %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="fas fa-bell"></i>
+                                {% endif %}
+                            </div>
+                            <div class="notification-content">
+                                <h6>{{ notification.get_notification_type_display }}</h6>
+                                <p>{{ notification.message|truncatechars:100 }}</p>
+                                <small>{{ notification.created_at|timesince }} ago</small>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-bell-slash"></i>
+                        <h4>No Notifications</h4>
+                        <p>You have no recent notifications</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Pending Feedback -->
+            {% if pending_feedback %}
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>Pending Feedback</h3>
+                </div>
+                <div class="card-body">
+                    {% for complaint in pending_feedback|slice:":3" %}
+                    <div class="mb-3 p-3 bg-light rounded">
+                        <h5 class="mb-1">{{ complaint.title|truncatechars:40 }}</h5>
+                        <p class="small text-muted mb-2">Resolved {{ complaint.updated_at|timesince }} ago</p>
+                        <a href="#" class="btn btn-sm btn-block btn-success">
+                            <i class="fas fa-star mr-1"></i> Rate Service
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>Quick Actions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <a href="#" class="quick-action-btn">
+                            <i class="fas fa-plus-circle"></i> New Complaint
+                        </a>
+                        <a href="#" class="quick-action-btn">
+                            <i class="fas fa-list"></i> All Complaints
+                        </a>
+                        <a href="#" class="quick-action-btn">
+                            <i class="fas fa-concierge-bell"></i> Available Services
+                        </a>
+                        <a href="#" class="quick-action-btn">
+                            <i class="fas fa-user-cog"></i> My Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Mark notifications as read when clicked
+        document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', function() {
+                if (this.classList.contains('unread')) {
+                    const notificationId = this.dataset.notificationId;
+                    markNotificationAsRead(notificationId);
+                }
+            });
+        });
+
+        // Mark messages as read when clicked
+        document.querySelectorAll('.message-item').forEach(item => {
+            item.addEventListener('click', function() {
+                if (this.classList.contains('unread')) {
+                    const messageId = this.dataset.messageId;
+                    markMessageAsRead(messageId);
+                }
+            });
+        });
+
+        // Initialize complaint status chart
+        const statusCtx = document.getElementById('complaintStatusChart');
+        if (statusCtx) {
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Open', 'In Progress', 'Resolved'],
+                    datasets: [{
+                        data: [
+                            {{ status_counts.open }},
+                            {{ status_counts.in_progress }},
+                            {{ status_counts.resolved }}
+                        ],
+                        backgroundColor: [
+                            'rgba(255, 152, 0, 0.8)',
+                            'rgba(33, 150, 243, 0.8)',
+                            'rgba(76, 175, 80, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 152, 0, 1)',
+                            'rgba(33, 150, 243, 1)',
+                            'rgba(76, 175, 80, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '70%',
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            });
+        }
+
+        // Initialize monthly complaints chart
+        const monthlyCtx = document.getElementById('monthlyComplaintsChart');
+        if (monthlyCtx) {
+            new Chart(monthlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{ monthly_labels|safe }},
+                    datasets: [{
+                        label: 'Complaints',
+                        data: {{ monthly_data }},
+                        backgroundColor: 'rgba(45, 94, 82, 0.7)',
+                        borderColor: 'rgba(45, 94, 82, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Complaints: ${context.raw}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                display: true,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+
+        // Real-time updates simulation
+        if (typeof EventSource !== 'undefined') {
+            const eventSource = new EventSource('/sse/notifications/');
+
+            eventSource.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                if (data.type === 'notification') {
+                    updateNotificationBadge();
+                    addNewNotification(data);
+                }
+            };
+        }
+
+        // AJAX functions
+        function markNotificationAsRead(notificationId) {
+            fetch(`/api/notifications/${notificationId}/mark-read/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateNotificationBadge();
+                }
+            });
+        }
+
+        function markMessageAsRead(messageId) {
+            fetch(`/api/messages/${messageId}/mark-read/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            });
+        }
+
+        function updateNotificationBadge() {
+            fetch('/api/notifications/unread-count/')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('.stat-card.notifications .stat-value').textContent = data.count;
+                });
+        }
+
+        function addNewNotification(data) {
+            const notificationsList = document.querySelector('.notification-list');
+            if (notificationsList) {
+                const newNotification = createNotificationElement(data);
+                notificationsList.insertBefore(newNotification, notificationsList.firstChild);
+
+                // Remove oldest notification if more than 5
+                if (notificationsList.children.length > 5) {
+                    notificationsList.removeChild(notificationsList.lastChild);
+                }
+            }
+        }
+
+        function createNotificationElement(data) {
+            const div = document.createElement('a');
+            div.className = 'notification-item unread animate-in';
+            div.href = data.url;
+            div.dataset.notificationId = data.id;
+
+            let iconClass;
+            switch(data.notification_type) {
+                case 'status_change':
+                    iconClass = 'fas fa-sync-alt';
+                    break;
+                case 'new_response':
+                    iconClass = 'fas fa-reply';
+                    break;
+                case 'feedback_request':
+                    iconClass = 'fas fa-star';
+                    break;
+                default:
+                    iconClass = 'fas fa-bell';
+            }
+
+            div.innerHTML = `
+                <div class="notification-icon">
+                    <i class="${iconClass}"></i>
+                </div>
+                <div class="notification-content">
+                    <h6>${data.title}</h6>
+                    <p>${data.message}</p>
+                    <small>Just now</small>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Add animation classes to elements
+        document.querySelectorAll('.stat-card').forEach((card, index) => {
+            card.classList.add('animate-in', `delay-${index}`);
+        });
+
+        // Auto-update stats every 30 seconds
+        setInterval(updateStats, 30000);
+
+        function updateStats() {
+            fetch('/api/dashboard-stats/')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('.stat-card.active .stat-value').textContent = data.active_complaints;
+                    document.querySelector('.stat-card.resolved .stat-value').textContent = data.resolved_complaints;
+                    document.querySelector('.stat-card.pending .stat-value').textContent = data.pending_feedback;
+                    document.querySelector('.stat-card.notifications .stat-value').textContent = data.unread_notifications;
+                });
+        }
+    });
+</script>
+{% endblock %}

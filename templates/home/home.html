@@ -1,0 +1,520 @@
+﻿{% extends "home/base.html" %}
+{% load static %}
+
+{% block title %}Home | Citizen Engagement System{% endblock %}
+
+{% block page_title %}Welcome to Citizen Engagement System{% endblock %}
+
+{% block content %}
+
+<style>
+    :root {
+        --bs-primary: #0b1210;
+        --bs-primary-solid: rgb(11, 18, 16);
+        --bs-secondary: #eae1da;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, rgba(11, 18, 16, 0.9) 0%, rgba(59, 89, 80, 0.9) 100%), url('{% static "images/city-background.jpg" %}');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 5rem 0;
+        position: relative;
+    }
+
+    /* Section Titles */
+    .section-title {
+        position: relative;
+        display: inline-block;
+        color: var(--bs-primary);
+    }
+
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background-color: var(--bs-primary);
+    }
+
+    /* Service Cards */
+    .service-card {
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .service-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(11, 18, 16, 0.1);
+        border-color: var(--bs-secondary);
+    }
+
+    .service-icon {
+        color: var(--bs-primary);
+        background-color: var(--bs-secondary);
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+    }
+
+    /* Agency Cards */
+    .agency-card {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .agency-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(11, 18, 16, 0.1);
+    }
+
+    .agency-placeholder {
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+
+    /* Testimonials */
+    .testimonial-card {
+        border-radius: 10px;
+        height: 100%;
+    }
+
+    .stars {
+        color: #ffc107;
+    }
+
+    .rating-display {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--bs-primary);
+    }
+
+    /* Buttons */
+    .btn-primary {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--bs-primary-solid);
+        border-color: var(--bs-primary-solid);
+    }
+
+    .btn-outline-primary {
+        color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+
+    .btn-outline-primary:hover {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+        color: white;
+    }
+
+    /* Stats Section */
+    .stats-section h2 {
+        color: var(--bs-primary) !important;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    /* How It Works Section */
+    .step-card {
+        border-left: 4px solid var(--bs-primary);
+        transition: all 0.3s ease;
+    }
+
+    .step-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(11, 18, 16, 0.1);
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        background-color: var(--bs-primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+    }
+
+    /* Recent Activity */
+    .activity-item {
+        border-left: 3px solid var(--bs-primary);
+        padding-left: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .activity-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    /* Map Section */
+    .map-container {
+        height: 400px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 3rem 0;
+        }
+
+        .display-4 {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Your Voice Matters</h1>
+                <p class="lead mb-4">Engage with your local government to report issues, track resolutions, and help improve public services in your community.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'complaint_submission' %}" class="btn btn-light btn-lg px-4">Report an Issue</a>
+                    <a href="{% url 'complaint_tracking' %}" class="btn btn-outline-light btn-lg px-4">Track Status</a>
+                </div>
+            </div>
+            </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-3 col-6">
+                <div class="stat-card text-center">
+                    <h2 class="display-4">{{ stats.total_complaints|default:"0" }}</h2>
+                    <p class="mb-0 text-muted">Issues Reported</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card text-center">
+                    <h2 class="display-4">{{ stats.resolved_complaints|default:"0" }}</h2>
+                    <p class="mb-0 text-muted">Issues Resolved</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card text-center">
+                    <h2 class="display-4">{{ stats.agencies_count|default:"0" }}</h2>
+                    <p class="mb-0 text-muted">Government Agencies</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card text-center">
+                    <h2 class="display-4">{{ stats.response_rate|default:"100" }}%</h2>
+                    <p class="mb-0 text-muted">Response Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">How It Works</h2>
+            <p class="lead text-muted">Simple steps to get your concerns addressed</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card step-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="step-number">1</div>
+                            <h3 class="h5 mb-0">Report an Issue</h3>
+                        </div>
+                        <p>Submit your complaint or feedback through our easy-to-use form. Provide details and location to help us address it quickly.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card step-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="step-number">2</div>
+                            <h3 class="h5 mb-0">Track Progress</h3>
+                        </div>
+                        <p>Get real-time updates on your case status. Our system keeps you informed at every step of the resolution process.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card step-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="step-number">3</div>
+                            <h3 class="h5 mb-0">Resolution & Feedback</h3>
+                        </div>
+                        <p>Once resolved, you'll receive notification. Share your experience to help us improve services for everyone.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Services Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Popular Service Categories</h2>
+            <p class="lead text-muted">Select a category to submit your feedback or complaint</p>
+        </div>
+
+        <div class="row g-4">
+            {% for category in service_categories %}
+            <div class="col-lg-3 col-md-6">
+                <a href="{% url 'complaint_submission' %}?category={{ category.id }}" class="card service-card h-100 text-decoration-none">
+                    <div class="card-body text-center">
+                        <div class="service-icon mb-3">
+                            <i class="fas fa-{{ category.icon|default:'comment-alt' }} fa-2x"></i>
+                        </div>
+                        <h3 class="h5">{{ category.name }}</h3>
+                        <p class="text-muted small">{{ category.complaint_count }} reports</p>
+                        {% if category.agency %}
+                        <span class="badge bg-light text-dark">{{ category.agency.short_code }}</span>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="#" class="btn btn-outline-primary">View All Services</a>
+        </div>
+    </div>
+</section>
+
+<!-- Map Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Recent Issues in Your Area</h2>
+            <p class="lead text-muted">See what issues are being reported near you</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="map-container">
+                    <!-- Map would be implemented with a library like Leaflet or Google Maps -->
+                    <div id="complaints-map" style="height: 100%; width: 100%; background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                        <p class="text-muted">Interactive map showing recent complaints</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h3 class="h5 mb-0">Recent Activity</h3>
+                    </div>
+                    <div class="card-body">
+                        {% for complaint in recent_complaints %}
+                        <div class="activity-item">
+                            <h4 class="h6 mb-1">{{ complaint.title }}</h4>
+                            <p class="small mb-1">{{ complaint.description|truncatewords:15 }}</p>
+                            <div class="d-flex justify-content-between">
+                                <span class="badge bg-light text-dark">{{ complaint.category.name|default:"General" }}</span>
+                                <span class="activity-date">{{ complaint.created_at|timesince }} ago</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        <a href="#" class="btn btn-sm btn-outline-primary mt-2">View All Activity</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Top Agencies Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Top Performing Agencies</h2>
+            <p class="lead text-muted">These agencies have the highest resolution rates</p>
+        </div>
+
+        <div class="row g-4">
+            {% for agency in top_agencies %}
+            <div class="col-lg-3 col-md-6">
+                <div class="card agency-card h-100">
+                    <div class="card-body text-center">
+                        {% if agency.logo %}
+                        <img src="{{ agency.logo.url }}" alt="{{ agency.name }}" class="img-fluid mb-3" style="max-height: 80px;">
+                        {% else %}
+                        <div class="agency-placeholder mb-3">
+                            <i class="fas fa-building fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                        <h3 class="h5">{{ agency.name }}</h3>
+                        <p class="text-muted small">{{ agency.resolved_count }} resolved cases</p>
+                        <div class="mb-2">
+                            <span class="stars">
+                                {% with ''|center:5 as range %}
+                                {% for _ in range %}
+                                    {% if forloop.counter <= agency.average_rating %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                    <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                {% endwith %}
+                            </span>
+                            <small class="text-muted">({{ agency.feedback_count }})</small>
+                        </div>
+                        <a href="#" class="btn btn-sm btn-outline-primary mt-2">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="#" class="btn btn-outline-primary">View All Agencies</a>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">What Citizens Are Saying</h2>
+            <div class="d-flex justify-content-center align-items-center">
+                <div class="rating-display mx-3">
+                    <span class="display-4">{{ overall_rating }}</span>/5
+                </div>
+                <div class="text-start">
+                    <div class="stars mb-1">
+                        {% with ''|center:5 as range %}
+                        {% for _ in range %}
+                            {% if forloop.counter <= overall_rating %}
+                            <i class="fas fa-star text-warning"></i>
+                            {% else %}
+                            <i class="far fa-star text-warning"></i>
+                            {% endif %}
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <p class="small text-muted mb-0">Based on {{ testimonials|length }} reviews</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% for testimonial in testimonials %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card testimonial-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <div class="stars">
+                                {% with ''|center:5 as range %}
+                                {% for _ in range %}
+                                    {% if forloop.counter <= testimonial.rating %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                    <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                        <p class="mb-3">{{ testimonial.comments|truncatewords:30 }}</p>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                {% if testimonial.complaint.citizen.profile_picture %}
+                                <img src="{{ testimonial.complaint.citizen.profile_picture.url }}" class="rounded-circle" width="40" height="40" alt="User">
+                                {% else %}
+                                <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">
+                                    {{ testimonial.complaint.citizen_name|default:"Anonymous" }}
+                                </h6>
+                                <small class="text-muted">
+                                    {{ testimonial.complaint.category.name|default:"Public Service" }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Mobile App CTA -->
+<section class="py-5" style="background-color: var(--bs-primary); color: white;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h2 class="mb-3">Get the Mobile App</h2>
+                <p class="lead mb-4">Report issues on the go with our easy-to-use mobile application. Available for both Android and iOS devices.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="#" class="btn btn-light">
+                        <i class="fab fa-apple me-2"></i> App Store
+                    </a>
+                    <a href="#" class="btn btn-light">
+                        <i class="fab fa-google-play me-2"></i> Google Play
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <img src="{% static 'images/mobile-app-screens.png' %}" alt="Mobile App" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA Section -->
+<section class="py-5 bg-light">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to Make a Difference?</h2>
+        <p class="lead mb-4">Your feedback helps improve public services for everyone in the community.</p>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="{% url 'complaint_submission' %}" class="btn btn-primary btn-lg px-5">Report an Issue</a>
+            <a href="{% url 'complaint_tracking' %}" class="btn btn-outline-primary btn-lg px-5">Browse Issues</a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
